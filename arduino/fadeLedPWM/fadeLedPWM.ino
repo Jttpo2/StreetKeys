@@ -2,7 +2,7 @@ int ledPin = 13;
 int brightness = 0;
 int fadeAmount = 5;
 
-const int interval = 20; // adjustment interval
+const int interval = 20; // fade adjustment interval
 
 unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;

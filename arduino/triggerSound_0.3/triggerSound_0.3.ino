@@ -2,7 +2,7 @@ const int buttonPin = 9;
 const int ledPin = 13;      // the number of the LED pin
 
 int ledState = HIGH;         // the current state of the output pin
-int buttonState;             // the current reading from the input pin
+int buttonState = LOW;             // the current reading from the input pin
 int lastButtonState = LOW;   // the previous reading from the input pin
 
 // Debouncing
@@ -32,7 +32,7 @@ void setup() {
   // initialize the LED pin as an output:
   pinMode(ledPin, OUTPUT);
   Serial.begin(9600);
-//  establishContact(); // send a byte to establish contact until receiver responds 
+  establishContact(); // send a byte to establish contact until receiver responds 
   
   // set initial LED state
   digitalWrite(ledPin, ledState);
@@ -85,15 +85,18 @@ void loop() {
 // ******* Receive from Processing **********
   if (Serial.available() > 0) {
     value = Serial.readStringUntil(terminator); 
-    float sampleLengthInSeconds = getDuration(value);
-    sampleLength = (sampleLengthInSeconds * 1000);
-    Serial.println(sampleLength);
+      if (value.equals("A")) {
+      } else {
+        float sampleLengthInSeconds = getDuration(value);
+        sampleLength = (sampleLengthInSeconds * 1000);
+        Serial.println(sampleLength);
+      }
   }
   
 // ******* LED Fading **********
   int interval = 30;
   float modifiedSampleLength = sampleLength * multiplier;
-  fadeAmount = 255 / (modifiedSampleLength / interval);
+  fadeAmount = 255 / (modifiedSampleLength / interval); // map fading interval times to analog output amount
 
   currentMillis = millis();
 
@@ -114,5 +117,11 @@ float getDuration(String str) {
   return duration.toFloat();
 }
 
-
+// Establishing coms with processing
+void establishContact() {
+  while (Serial.available() <= 0) {
+    Serial.println("A");
+    delay(300);
+  }
+}
 

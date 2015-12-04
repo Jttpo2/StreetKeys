@@ -5,6 +5,7 @@ import processing.sound.*;
 String value;
 Serial arduinoPort;
 int portRate = 9600;
+boolean firstContact = false;
 
 SoundFile[] files;
 
@@ -20,9 +21,10 @@ void setup() {
   int portNumber = 1;
   String portName = Serial.list()[portNumber];
   arduinoPort = new Serial(this, portName, portRate);
+  arduinoPort.bufferUntil('\n');
   
-  size(640, 360);
-  background(255);
+  size(200, 200);
+  background(255,60,50);
  
   // *********** SoundFiles **************************** 
   // Load soundfiles from the /data folder of the sketch
@@ -33,26 +35,6 @@ void setup() {
 }    
 
 void draw() {
-  if (arduinoPort.available() > 0) {
-    // Data available
-    value = arduinoPort.readStringUntil('\n');
-    // Remove newline
-    value = value.trim();
-    println("From Arduino: " + value);
-    if (value.equals(oneDown)) {
-      //files[1].play();
-      playSound(files[1]);
-      // Tell the arduino the duration of the sample
-      arduinoPort.write(oneDown + files[1].duration() + terminator);
-    }
-    //println(files[1].duration());
-    //println(getDuration(files[1]));
-  }
-  
-  //if (mousePressed) {
-  //  arduinoPort.write(oneDown + terminator);
-  //  println("yeah");
-  //}
 }
 
   // Play file with correct rate, despite its sample rate 
@@ -68,3 +50,32 @@ float getPlayRate(SoundFile file) {
     playRate = 1/playRate;
     return playRate;
 } 
+
+// Handles all events from the serial port
+void serialEvent(Serial arduinoPort) {
+  // Data available
+    value = arduinoPort.readStringUntil('\n');
+    if (value != null) {
+      value = value.trim();
+      println("From Arduino: " + value);
+      
+      if (!firstContact) {
+        if (value.equals("A")) {
+          arduinoPort.clear();
+          firstContact = true;
+          arduinoPort.write("A");
+          println("contact made with arduino");
+        }
+      } else { //if we've already established contact, keep getting and parsing data
+         if (value.equals(oneDown)) {
+        playSound(files[1]);
+        // Tell the arduino the duration of the sample
+        arduinoPort.write(oneDown + files[1].duration() + terminator);
+        }
+        // ask for more data
+        arduinoPort.write("A");
+      }
+      
+     
+    }
+}
