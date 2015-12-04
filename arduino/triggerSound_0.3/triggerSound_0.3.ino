@@ -13,6 +13,8 @@ long debounceDelay = 50;    // the debounce time; increase if the output flicker
 String value;
 String buttonDown = "1D";
 String buttonUp = "1U";
+char terminator = '\n';
+int sampleLength = 0;
 
 // LED setup
 int brightness = 0;
@@ -28,7 +30,8 @@ void setup() {
   // initialize the LED pin as an output:
   pinMode(ledPin, OUTPUT);
   Serial.begin(9600);
-
+//  establishContact(); // send a byte to establish contact until receiver responds 
+  
   // set initial LED state
   digitalWrite(ledPin, ledState);
 }
@@ -78,17 +81,20 @@ void loop() {
   lastButtonState = reading;
 
 // ******* Receive from Processing **********
-  if (Serial.available()) {
-    value = Serial.read(); 
-    Serial.println(value);
-    analogWrite(ledPin, 255);
-    delay(1000);
-    analogWrite(ledPin, 0); 
+  if (Serial.available() > 0) {
+    value = Serial.readStringUntil(terminator); 
+    float sampleLengthInSeconds = getDuration(value);
+    sampleLength = (int) (sampleLengthInSeconds * 1000);
+    Serial.println(sampleLength);
+//    analogWrite(ledPin, 255);
+//    delay(1000);
+//    analogWrite(ledPin, 0); 
   }
   
 
 // ******* LED Fading **********
-  int sampleLength = 20000;
+//  int sampleLength = 20000;
+// sampleLength = 1828;
   int interval = sampleLength / 255;
   
   currentMillis = millis();
@@ -101,3 +107,12 @@ void loop() {
   // ******** LED fading end ***********
 
 }
+
+float getDuration(String str) {
+  String duration = str.substring(2);
+  //Serial.println("Duration: " + duration);
+  return duration.toFloat();
+}
+
+
+

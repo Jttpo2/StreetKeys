@@ -11,6 +11,7 @@ SoundFile[] files;
 // ***** Arduiono Protocol **********
 String oneDown = "1D";
 String oneUp = "1U";
+char terminator = '\n';
 
 void setup() {
   
@@ -37,18 +38,21 @@ void draw() {
     value = arduinoPort.readStringUntil('\n');
     // Remove newline
     value = value.trim();
+    println("From Arduino: " + value);
     if (value.equals(oneDown)) {
       //files[1].play();
       playSound(files[1]);
+      // Tell the arduino the duration of the sample
+      arduinoPort.write(oneDown + files[1].duration() + terminator);
     }
-    println(files[1].duration());
+    //println(files[1].duration());
     //println(getDuration(files[1]));
   }
   
-  if (mousePressed) {
-    arduinoPort.write(oneDown);
-    println("yeah");
-  }
+  //if (mousePressed) {
+  //  arduinoPort.write(oneDown + terminator);
+  //  println("yeah");
+  //}
 }
 
   // Play file with correct rate, despite its sample rate 
