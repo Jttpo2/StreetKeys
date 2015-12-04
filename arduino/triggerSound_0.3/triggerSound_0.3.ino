@@ -11,8 +11,8 @@ long debounceDelay = 50;    // the debounce time; increase if the output flicker
 
 // Processing communication
 String value;
-String buttonDown = "1D";
-String buttonUp = "1U";
+String buttonDown = "B1D";
+String buttonUp = "B1U";
 char terminator = '\n';
 
 
@@ -89,7 +89,7 @@ void loop() {
       } else {
         float sampleLengthInSeconds = getDuration(value);
         sampleLength = (sampleLengthInSeconds * 1000);
-        Serial.println(sampleLength);
+//        Serial.println(sampleLength);
       }
   }
   
