@@ -5,8 +5,7 @@ String value;
 Serial arduinoPort;
 int portRate = 9600;
 
-SoundFile file;
-SoundFile file2;
+SoundFile[] files;
 
 String fileName2 = "test.wav";
 String fileName = "bugsbunny2.wav";
@@ -17,6 +16,8 @@ String oneUp = "1U";
 
 void setup() {
   
+  files = new SoundFile[9];
+  
   int portNumber = 1;
   String portName = Serial.list()[portNumber];
   arduinoPort = new Serial(this, portName, portRate);
@@ -26,14 +27,14 @@ void setup() {
  
   // *********** SoundFiles ****************************
   // Load a soundfile from the /data folder of the sketch and play it back
-  file = new SoundFile(this, fileName);
-  file.rate(playbackRate);
- // file.play();
+  files[0] = new SoundFile(this, fileName);
+  files[0].rate(playbackRate);
+ // files[0].play();
   
   // Load a soundfile from the /data folder of the sketch and play it back
-  file2 = new SoundFile(this, fileName2);
-  file2.rate(playbackRate);
-  //file2.play();
+  files[1] = new SoundFile(this, fileName2);
+  files[1].rate(playbackRate);
+  //files[1].play();
   
 }      
 
@@ -44,7 +45,7 @@ void draw() {
     // Remove newline
     value = value.trim();
     if (value.equals(oneDown)) {
-      file2.play();
+      files[1].play();
     }
     println(value);
   }
