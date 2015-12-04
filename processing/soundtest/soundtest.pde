@@ -44,6 +44,11 @@ void draw() {
     println(files[1].duration());
     //println(getDuration(files[1]));
   }
+  
+  if (mousePressed) {
+    arduinoPort.write(oneDown);
+    println("yeah");
+  }
 }
 
   // Play file with correct rate, despite its sample rate 

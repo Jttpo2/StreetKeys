@@ -9,6 +9,8 @@ int lastButtonState = LOW;   // the previous reading from the input pin
 long lastDebounceTime = 0;  // the last time the output pin was toggled
 long debounceDelay = 50;    // the debounce time; increase if the output flickers
 
+// Processing communication
+String value;
 String buttonDown = "1D";
 String buttonUp = "1U";
 
@@ -74,6 +76,16 @@ void loop() {
   // save the reading.  Next time through the loop,
   // it'll be the lastButtonState:
   lastButtonState = reading;
+
+// ******* Receive from Processing **********
+  if (Serial.available()) {
+    value = Serial.read(); 
+    Serial.println(value);
+    analogWrite(ledPin, 255);
+    delay(1000);
+    analogWrite(ledPin, 0); 
+  }
+  
 
 // ******* LED Fading **********
   int sampleLength = 20000;
