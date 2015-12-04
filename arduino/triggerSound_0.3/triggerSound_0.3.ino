@@ -57,10 +57,12 @@ void loop() {
         // only toggle the LED if the new button state is HIGH
         // Send correct button state to processing
         if (buttonState == HIGH) {
+          // ****** Do something when button is pressed *****
           ledState = !ledState;
           Serial.println(buttonDown);
           brightness = 255;
         } else {
+          // ****** Do something when button is released *****
           Serial.println(buttonUp);
         }
     }
@@ -74,6 +76,9 @@ void loop() {
   lastButtonState = reading;
 
 // ******* LED Fading **********
+  int sampleLength = 20000;
+  int interval = sampleLength / 255;
+  
   currentMillis = millis();
 
   if (currentMillis - previousMillis >= interval && brightness >= 0) {
