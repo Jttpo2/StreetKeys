@@ -5,12 +5,20 @@ int ledState = HIGH;         // the current state of the output pin
 int buttonState;             // the current reading from the input pin
 int lastButtonState = LOW;   // the previous reading from the input pin
 
-
+// Debouncing
 long lastDebounceTime = 0;  // the last time the output pin was toggled
 long debounceDelay = 50;    // the debounce time; increase if the output flickers
 
 String buttonDown = "1D";
 String buttonUp = "1U";
+
+// LED setup
+int brightness = 0;
+int fadeAmount = 5;
+const int interval = 20; // fade adjustment interval
+unsigned long currentMillis = 0;
+unsigned long previousMillis = 0;
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -26,7 +34,7 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
 
-// DEBOUNCING
+// ******** Debouncing **********
   int reading = digitalRead(buttonPin);
   // check to see if you just pressed the button
   // (i.e. the input went from LOW to HIGH),  and you've waited
@@ -51,6 +59,7 @@ void loop() {
         if (buttonState == HIGH) {
           ledState = !ledState;
           Serial.println(buttonDown);
+          brightness = 255;
         } else {
           Serial.println(buttonUp);
         }
@@ -58,24 +67,20 @@ void loop() {
   }
 
    // set the LED:
-  digitalWrite(ledPin, ledState);
+  //digitalWrite(ledPin, ledState);
 
   // save the reading.  Next time through the loop,
   // it'll be the lastButtonState:
   lastButtonState = reading;
 
-// /DEBOUNCING
+// ******* LED Fading **********
+  currentMillis = millis();
 
-/*
-buttonState = digitalRead(buttonPin);
+  if (currentMillis - previousMillis >= interval && brightness >= 0) {
+    previousMillis = currentMillis;
+    analogWrite(ledPin, brightness);
+    brightness -= fadeAmount;
+  }
+  // ******** LED fading end ***********
 
-if (buttonState == HIGH) {
-  digitalWrite(ledPin, HIGH);
-  Serial.println(buttonDown);
-  delay(500);
-} else {
-  digitalWrite(ledPin, LOW);
-  
-}
-*/
 }
