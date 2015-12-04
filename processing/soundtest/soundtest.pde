@@ -5,13 +5,14 @@ import processing.sound.*;
 String value;
 Serial arduinoPort;
 int portRate = 9600;
+//boolean firstContact = true;
 boolean firstContact = false;
 
 SoundFile[] files;
 
 // ***** Arduiono Protocol **********
-String oneDown = "1D";
-String oneUp = "1U";
+//String oneDown = "B1D";
+//String oneUp = "B1U";
 char terminator = '\n';
 
 void setup() {
@@ -67,15 +68,25 @@ void serialEvent(Serial arduinoPort) {
           println("contact made with arduino");
         }
       } else { //if we've already established contact, keep getting and parsing data
-         if (value.equals(oneDown)) {
-        playSound(files[1]);
-        // Tell the arduino the duration of the sample
-        arduinoPort.write(oneDown + files[1].duration() + terminator);
-        }
-        // ask for more data
-        arduinoPort.write("A");
+         char firstChar = value.charAt(0);
+         if (firstChar == 'B') {
+           char secondChar = value.charAt(1);
+           char thirdChar = value.charAt(2);
+           int buttonNumber = Character.getNumericValue(secondChar);
+           if (thirdChar == 'D') {
+            playSound(files[buttonNumber]);
+             // Tell the arduino the duration of the sample
+             //println(files[buttonNumber].duration());
+             arduinoPort.write("B" + buttonNumber + files[buttonNumber].duration() + terminator);
+           } else if (thirdChar == 'U') {
+            // Button released 
+           }
+         }
+         
+          // ask for more data
+          //println("sending A to arduino");
+          //arduinoPort.write("A");
+        
       }
-      
-     
     }
 }
