@@ -86,6 +86,7 @@ void loop() {
   if (Serial.available() > 0) {
     value = Serial.readStringUntil(terminator); 
       if (value.equals("A")) {
+      
       } else {
         float sampleLengthInSeconds = getDuration(value);
         sampleLength = (sampleLengthInSeconds * 1000);
@@ -112,8 +113,8 @@ void loop() {
 }
 
 float getDuration(String str) {
-  String duration = str.substring(2);
-  //Serial.println("Duration: " + duration);
+  String duration = str.substring(3);
+//  Serial.println("Duration: " + duration);
   return duration.toFloat();
 }
 
