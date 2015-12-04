@@ -9,7 +9,7 @@ SoundFile[] files;
 
 String fileName2 = "test.wav";
 String fileName = "bugsbunny2.wav";
-float playbackRate = 0.25;
+float playbackRate = 1;
 
 String oneDown = "1D";
 String oneUp = "1U";
@@ -34,6 +34,7 @@ void setup() {
   // Load a soundfile from the /data folder of the sketch and play it back
   files[1] = new SoundFile(this, fileName2);
   files[1].rate(playbackRate);
+  //files
   //files[1].play();
   
 }      
@@ -45,10 +46,34 @@ void draw() {
     // Remove newline
     value = value.trim();
     if (value.equals(oneDown)) {
-      files[1].play();
+      //files[1].play();
+      playSound(files[1]);
     }
-    println(value);
+    println(files[1].duration());
+    //println(getDuration(files[1]));
   }
-  
-  
 }
+
+  // Play file with correct rate, despite its sample rate 
+void playSound(SoundFile file) {
+    float rate = getPlayRate(file);
+    file.rate(rate);
+    file.play();
+}
+
+float getPlayRate(SoundFile file) {
+  int sampleRate = file.sampleRate();
+    float playRate = 44100 / sampleRate;
+    playRate = 1/playRate;
+    return playRate;
+}
+
+// UNNECESSARY Get file duration, regardless of its sample rate
+float getDuration(SoundFile file) {
+  float rate = getPlayRate(file);
+  
+  float duration = (file.duration() * (1/rate));  
+  println("rate: "+ duration);
+  return duration;
+}
+  
