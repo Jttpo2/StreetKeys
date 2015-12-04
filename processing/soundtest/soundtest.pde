@@ -1,16 +1,14 @@
 import processing.serial.*;
 import processing.sound.*;
 
+// ***** Serial communication ***
 String value;
 Serial arduinoPort;
 int portRate = 9600;
 
 SoundFile[] files;
 
-String fileName2 = "test.wav";
-String fileName = "bugsbunny2.wav";
-float playbackRate = 1;
-
+// ***** Arduiono Protocol **********
 String oneDown = "1D";
 String oneUp = "1U";
 
@@ -25,19 +23,13 @@ void setup() {
   size(640, 360);
   background(255);
  
-  // *********** SoundFiles ****************************
-  // Load a soundfile from the /data folder of the sketch and play it back
-  files[0] = new SoundFile(this, fileName);
-  files[0].rate(playbackRate);
- // files[0].play();
-  
-  // Load a soundfile from the /data folder of the sketch and play it back
-  files[1] = new SoundFile(this, fileName2);
-  files[1].rate(playbackRate);
-  //files
-  //files[1].play();
-  
-}      
+  // *********** SoundFiles **************************** 
+  // Load soundfiles from the /data folder of the sketch
+  int fileAmount = 2;
+  for (int i=0; i<fileAmount; i++) {
+    files[i] = new SoundFile(this, (i+1) + ".wav");
+  }
+}    
 
 void draw() {
   if (arduinoPort.available() > 0) {
@@ -66,14 +58,4 @@ float getPlayRate(SoundFile file) {
     float playRate = 44100 / sampleRate;
     playRate = 1/playRate;
     return playRate;
-}
-
-// UNNECESSARY Get file duration, regardless of its sample rate
-float getDuration(SoundFile file) {
-  float rate = getPlayRate(file);
-  
-  float duration = (file.duration() * (1/rate));  
-  println("rate: "+ duration);
-  return duration;
-}
-  
+} 
