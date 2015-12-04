@@ -12,6 +12,9 @@ String fileName2 = "test.wav";
 String fileName = "bugsbunny2.wav";
 float playbackRate = 0.25;
 
+String oneDown = "1D";
+String oneUp = "1U";
+
 void setup() {
   
   int portNumber = 1;
@@ -37,9 +40,11 @@ void draw() {
   if (arduinoPort.available() > 0) {
     // Data available
     value = arduinoPort.readStringUntil('\n');
-    //if (value.equals("S")) {
+    // Remove newline
+    value = value.trim();
+    if (value.equals(oneDown)) {
       file2.play();
-    //}
+    }
     println(value);
   }
   
