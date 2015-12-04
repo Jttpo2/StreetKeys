@@ -14,7 +14,7 @@ String value;
 String buttonDown = "1D";
 String buttonUp = "1U";
 char terminator = '\n';
-int sampleLength = 0;
+
 
 // LED setup
 int brightness = 0;
@@ -22,6 +22,8 @@ int fadeAmount = 5;
 const int interval = 20; // fade adjustment interval
 unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
+float sampleLength = 0;
+float multiplier = 0.75; // To shorten the led fading times slightly
 
 
 void setup() {
@@ -84,19 +86,15 @@ void loop() {
   if (Serial.available() > 0) {
     value = Serial.readStringUntil(terminator); 
     float sampleLengthInSeconds = getDuration(value);
-    sampleLength = (int) (sampleLengthInSeconds * 1000);
+    sampleLength = (sampleLengthInSeconds * 1000);
     Serial.println(sampleLength);
-//    analogWrite(ledPin, 255);
-//    delay(1000);
-//    analogWrite(ledPin, 0); 
   }
   
-
 // ******* LED Fading **********
-//  int sampleLength = 20000;
-// sampleLength = 1828;
-  int interval = sampleLength / 255;
-  
+  int interval = 30;
+  float modifiedSampleLength = sampleLength * multiplier;
+  fadeAmount = 255 / (modifiedSampleLength / interval);
+
   currentMillis = millis();
 
   if (currentMillis - previousMillis >= interval && brightness >= 0) {
@@ -104,8 +102,10 @@ void loop() {
     analogWrite(ledPin, brightness);
     brightness -= fadeAmount;
   }
+  if (brightness < 0) {
+    brightness = 0;
+  }
   // ******** LED fading end ***********
-
 }
 
 float getDuration(String str) {
