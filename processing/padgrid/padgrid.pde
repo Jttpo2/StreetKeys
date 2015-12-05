@@ -5,13 +5,8 @@ Client client;
 int serverPort = 5204;
 String value;
 
-//Serial comPort;
-//int baudRate = 9600;
-//int portNumber = 1;
-
 // Protocol
 char terminator = '\n';
-
 
 int counter = 0;
 color color1 = #88164A;
@@ -46,10 +41,6 @@ void setup() {
  
   // Connect to server
   client = new Client(this, "127.0.0.1", serverPort);
-  establishContact();
-  
-  //String portName = Serial.list()[portNumber];
-  //comPort = new Serial(this, portName, baudRate);
 }
 
 void draw() {
@@ -72,17 +63,16 @@ void draw() {
         }
       }
     }
-    
   } else {
     mouseIsPressed = false;
   }
- 
+  
 }
 
-void establishContact() {
-  while(client.available() <= 0) {
-    client.write("A" + terminator);
-    println("A");
-    delay(300);
+void clientEvent(Client someClient) {
+  value = someClient.readStringUntil(terminator);
+  if (value != null) {
+    
   }
+  
 }
