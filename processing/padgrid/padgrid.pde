@@ -20,6 +20,7 @@ color color4 = #126B4E;
 int rectSide;
 
 Pad[] pads;
+int activePad;
 
 boolean mouseIsPressed = false;
 
@@ -63,6 +64,7 @@ void draw() {
       for (int i=0; i<pads.length; i++) {
         if (pads[i].isWithin(mouseX, mouseY)) {
           pads[i].press();
+          activePad = i;
           println("pressed: " + (i));
           client.write("B" + i + "D" + terminator);
           break;
@@ -74,6 +76,13 @@ void draw() {
   }
  
   timer.update();
+}
+
+void mouseReleased() {
+  if (activePad != -1) {
+    client.write("B" + activePad + "U" + terminator);
+    activePad = -1;
+  }
 }
 
 void clientEvent(Client someClient) {
