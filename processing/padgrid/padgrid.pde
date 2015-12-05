@@ -1,3 +1,13 @@
+import processing.serial.*;
+
+Serial comPort;
+int baudRate = 9600;
+int portNumber = 1;
+
+// Protocol
+char terminator = '\n';
+
+
 int counter = 0;
 color color1 = #88164A;
 color color2 = #629418;
@@ -11,7 +21,8 @@ Pad[] pads;
 boolean mouseIsPressed = false;
 
 void setup() {
-  size(300, 300);
+  
+  size(210, 210);
   background(color4);
   rectSide = width/3;
   
@@ -27,6 +38,9 @@ void setup() {
   pads[6] = new Pad(0, rectSide*2, rectSide, color3);
   pads[7] = new Pad(rectSide, rectSide*2, rectSide, color4);
   pads[8] = new Pad(rectSide*2, rectSide*2, rectSide, color1);
+  
+  String portName = Serial.list()[portNumber];
+  comPort = new Serial(this, portName, baudRate);
 }
 
 void draw() {
@@ -40,9 +54,11 @@ void draw() {
   if (mousePressed) {
     if (!mouseIsPressed){ // To only get one mouseevent per press
       mouseIsPressed = true;
-      for (Pad pad: pads) {
-        if (pad.isWithin(mouseX, mouseY)) {
-          println("pressed" + pad.c);
+      for (int i=0; i<pads.length; i++) {
+        if (pads[i].isWithin(mouseX, mouseY)) {
+          pads[i].press();
+          println("pressed: " + (i+1));
+          comPort.write("B" + i + "D");
         }
       }
     }

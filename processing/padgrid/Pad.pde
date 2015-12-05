@@ -4,6 +4,7 @@ class Pad {
    int size;
    color c;
    color borderColor = 150;
+   color pressedColor = c - 100;
    
    Pad(int x, int y, int size, color c) {
       this.x = x;
@@ -14,6 +15,12 @@ class Pad {
    
    void display() {
      fill(c);
+     stroke(borderColor);
+     rect(x, y, size, size);
+   }
+   
+   void press() {
+     fill(pressedColor);
      stroke(borderColor);
      rect(x, y, size, size);
    }
