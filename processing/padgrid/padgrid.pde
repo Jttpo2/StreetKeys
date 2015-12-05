@@ -1,8 +1,13 @@
-import processing.serial.*;
+//import processing.serial.*;
+import processing.net.*; 
 
-Serial comPort;
-int baudRate = 9600;
-int portNumber = 1;
+Client client;
+int serverPort = 5204;
+String value;
+
+//Serial comPort;
+//int baudRate = 9600;
+//int portNumber = 1;
 
 // Protocol
 char terminator = '\n';
@@ -38,9 +43,13 @@ void setup() {
   pads[6] = new Pad(0, rectSide*2, rectSide, color3);
   pads[7] = new Pad(rectSide, rectSide*2, rectSide, color4);
   pads[8] = new Pad(rectSide*2, rectSide*2, rectSide, color1);
+ 
+  // Connect to server
+  client = new Client(this, "127.0.0.1", serverPort);
+  establishContact();
   
-  String portName = Serial.list()[portNumber];
-  comPort = new Serial(this, portName, baudRate);
+  //String portName = Serial.list()[portNumber];
+  //comPort = new Serial(this, portName, baudRate);
 }
 
 void draw() {
@@ -58,7 +67,8 @@ void draw() {
         if (pads[i].isWithin(mouseX, mouseY)) {
           pads[i].press();
           println("pressed: " + (i+1));
-          comPort.write("B" + i + "D");
+          client.write("B" + i + "D" + terminator);
+          break;
         }
       }
     }
@@ -67,4 +77,12 @@ void draw() {
     mouseIsPressed = false;
   }
  
+}
+
+void establishContact() {
+  while(client.available() <= 0) {
+    client.write("A" + terminator);
+    println("A");
+    delay(300);
+  }
 }

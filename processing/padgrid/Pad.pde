@@ -4,13 +4,14 @@ class Pad {
    int size;
    color c;
    color borderColor = 150;
-   color pressedColor = c - 100;
+   color pressedColor;
    
    Pad(int x, int y, int size, color c) {
       this.x = x;
       this.y = y;
       this.size = size;
       this.c = c;
+      pressedColor = this.c - 100;
    }
    
    void display() {

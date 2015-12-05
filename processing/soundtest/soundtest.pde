@@ -1,5 +1,15 @@
 import processing.serial.*;
 import processing.sound.*;
+import processing.net.*;
+
+// Toggles simulation environment, 
+// processing to processing instead of arduino to processing
+boolean sim = true; 
+
+// Server for simulation
+Server server;
+Client client;
+int serverPort = 5204;
 
 // ***** Serial communication ***
 String value;
@@ -19,10 +29,14 @@ void setup() {
   
   files = new SoundFile[9];
   
-  int portNumber = 1;
-  String portName = Serial.list()[portNumber];
-  arduinoPort = new Serial(this, portName, portRate);
-  arduinoPort.bufferUntil('\n');
+  if (!sim) {
+    int portNumber = 1;
+    String portName = Serial.list()[portNumber];
+    arduinoPort = new Serial(this, portName, portRate);
+    arduinoPort.bufferUntil('\n');
+  } else {
+    server = new Server(this, serverPort);
+  }
   
   size(200, 200);
   background(255,60,50);
@@ -36,6 +50,15 @@ void setup() {
 }    
 
 void draw() {
+  // Simulation input. Otherwise handled as a SerialEvent
+  if (sim) {
+    client = server.available();
+    if (client != null) {
+      value = client.readStringUntil(terminator);\
+      handleInput(value);
+    }
+    
+  }
 }
 
   // Play file with correct rate, despite its sample rate 
@@ -56,6 +79,10 @@ float getPlayRate(SoundFile file) {
 void serialEvent(Serial arduinoPort) {
   // Data available
     value = arduinoPort.readStringUntil('\n');
+    handleInput(value);
+}
+
+void handleInput(String value) {
     if (value != null) {
       value = value.trim();
       println("From Arduino: " + value);
@@ -64,7 +91,11 @@ void serialEvent(Serial arduinoPort) {
         if (value.equals("A")) {
           arduinoPort.clear();
           firstContact = true;
-          arduinoPort.write("A");
+          if (!sim) {
+            arduinoPort.write("A");
+          } else {
+            server.write("A");
+          }
           println("contact made with arduino");
         }
       } else { //if we've already established contact, keep getting and parsing data
@@ -77,7 +108,12 @@ void serialEvent(Serial arduinoPort) {
             playSound(files[buttonNumber]);
              // Tell the arduino the duration of the sample
              //println(files[buttonNumber].duration());
-             arduinoPort.write("B" + buttonNumber + files[buttonNumber].duration() + terminator);
+             String message = "B" + buttonNumber + files[buttonNumber].duration() + terminator;
+             if (!sim) {
+               arduinoPort.write(message);
+             } else {
+               server.write(message);
+             }
            } else if (thirdChar == 'U') {
             // Button released 
            }
@@ -86,7 +122,7 @@ void serialEvent(Serial arduinoPort) {
           // ask for more data
           //println("sending A to arduino");
           //arduinoPort.write("A");
-        
-      }
+      
     }
+  }
 }
