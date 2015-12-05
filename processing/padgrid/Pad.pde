@@ -16,6 +16,10 @@ class Pad {
      fill(c);
      stroke(borderColor);
      rect(x, y, size, size);
-     
+   }
+   
+   boolean isWithin(int x, int y) {
+     return x >= this.x && x<=(this.x + size)
+     && y >= this.y && y<=(this.y + size);
    }
 }
