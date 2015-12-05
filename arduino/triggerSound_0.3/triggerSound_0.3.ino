@@ -15,7 +15,6 @@ String buttonDown = "B1D";
 String buttonUp = "B1U";
 char terminator = '\n';
 
-
 // LED setup
 int brightness = 0;
 int fadeAmount = 5;
@@ -32,7 +31,6 @@ void setup() {
   // initialize the LED pin as an output:
   pinMode(ledPin, OUTPUT);
   Serial.begin(9600);
-  establishContact(); // send a byte to establish contact until receiver responds 
   
   // set initial LED state
   digitalWrite(ledPin, ledState);
@@ -85,13 +83,9 @@ void loop() {
 // ******* Receive from Processing **********
   if (Serial.available() > 0) {
     value = Serial.readStringUntil(terminator); 
-      if (value.equals("A")) {
-      
-      } else {
         float sampleLengthInSeconds = getDuration(value);
         sampleLength = (sampleLengthInSeconds * 1000);
 //        Serial.println(sampleLength);
-      }
   }
   
 // ******* LED Fading **********
@@ -116,13 +110,5 @@ float getDuration(String str) {
   String duration = str.substring(3);
 //  Serial.println("Duration: " + duration);
   return duration.toFloat();
-}
-
-// Establishing coms with processing
-void establishContact() {
-  while (Serial.available() <= 0) {
-    Serial.println("A");
-    delay(300);
-  }
 }
 
