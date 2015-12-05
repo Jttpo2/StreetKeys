@@ -16,7 +16,7 @@ String value;
 Serial arduinoPort;
 int portRate = 9600;
 //boolean firstContact = true;
-boolean firstContact = false;
+//boolean firstContact = false;
 
 SoundFile[] files;
 
@@ -43,7 +43,7 @@ void setup() {
  
   // *********** SoundFiles **************************** 
   // Load soundfiles from the /data folder of the sketch
-  int fileAmount = 2;
+  int fileAmount = 8;
   for (int i=0; i<fileAmount; i++) {
     files[i] = new SoundFile(this, (i+1) + ".wav");
   }
@@ -54,7 +54,7 @@ void draw() {
   if (sim) {
     client = server.available();
     if (client != null) {
-      value = client.readStringUntil(terminator);\
+      value = client.readStringUntil(terminator);
       handleInput(value);
     }
     
@@ -63,9 +63,13 @@ void draw() {
 
   // Play file with correct rate, despite its sample rate 
 void playSound(SoundFile file) {
-    float rate = getPlayRate(file);
-    file.rate(rate);
-    file.play();
+  if (file == null) {
+    println("Sound file missing");
+    return;
+  }
+  float rate = getPlayRate(file);
+  file.rate(rate);
+  file.play();
 }
 
 float getPlayRate(SoundFile file) {
@@ -83,46 +87,32 @@ void serialEvent(Serial arduinoPort) {
 }
 
 void handleInput(String value) {
-    if (value != null) {
-      value = value.trim();
-      println("From Arduino: " + value);
-      
-      if (!firstContact) {
-        if (value.equals("A")) {
-          arduinoPort.clear();
-          firstContact = true;
-          if (!sim) {
-            arduinoPort.write("A");
-          } else {
-            server.write("A");
-          }
-          println("contact made with arduino");
-        }
-      } else { //if we've already established contact, keep getting and parsing data
-         char firstChar = value.charAt(0);
-         if (firstChar == 'B') {
-           char secondChar = value.charAt(1);
-           char thirdChar = value.charAt(2);
-           int buttonNumber = Character.getNumericValue(secondChar);
-           if (thirdChar == 'D') {
+  if (value != null) {
+    value = value.trim();
+    println("From Arduino: " + value);
+    char firstChar = value.charAt(0);
+    if (firstChar == 'B') {
+        char secondChar = value.charAt(1);
+        char thirdChar = value.charAt(2);
+        int buttonNumber = Character.getNumericValue(secondChar);
+        if (thirdChar == 'D') {
+          if (files[buttonNumber] != null) {
             playSound(files[buttonNumber]);
-             // Tell the arduino the duration of the sample
-             //println(files[buttonNumber].duration());
-             String message = "B" + buttonNumber + files[buttonNumber].duration() + terminator;
-             if (!sim) {
-               arduinoPort.write(message);
-             } else {
-               server.write(message);
-             }
-           } else if (thirdChar == 'U') {
-            // Button released 
-           }
+            // Tell the arduino the duration of the sample
+            //println(files[buttonNumber].duration());
+            String message = "B" + buttonNumber + files[buttonNumber].duration() + terminator;
+            if (!sim) {
+              arduinoPort.write(message);
+            } else {
+              server.write(message);
+            }
+          } else {
+            println("Sound file missing");
+          }
+          
+         } else if (thirdChar == 'U') {
+          // Button released 
          }
-         
-          // ask for more data
-          //println("sending A to arduino");
-          //arduinoPort.write("A");
-      
     }
   }
 }

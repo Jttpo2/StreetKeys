@@ -1,6 +1,9 @@
 //import processing.serial.*;
 import processing.net.*; 
 
+Timer timer;
+static int numberOfTimers; // Hack to have timer id's
+
 Client client;
 int serverPort = 5204;
 String value;
@@ -41,6 +44,9 @@ void setup() {
  
   // Connect to server
   client = new Client(this, "127.0.0.1", serverPort);
+  
+  timer = new Timer(1000);
+  //timer.start();
 }
 
 void draw() {
@@ -57,7 +63,7 @@ void draw() {
       for (int i=0; i<pads.length; i++) {
         if (pads[i].isWithin(mouseX, mouseY)) {
           pads[i].press();
-          println("pressed: " + (i+1));
+          println("pressed: " + (i));
           client.write("B" + i + "D" + terminator);
           break;
         }
@@ -66,12 +72,14 @@ void draw() {
   } else {
     mouseIsPressed = false;
   }
-  
+ 
+  timer.update();
 }
 
 void clientEvent(Client someClient) {
   value = someClient.readStringUntil(terminator);
   if (value != null) {
+    println(value);
     
   }
   
