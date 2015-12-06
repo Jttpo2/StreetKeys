@@ -6,6 +6,8 @@ import processing.net.*;
 // processing to processing instead of arduino to processing
 boolean sim = true; 
 
+OscHandler oscHandler;
+
 // Server for simulation
 Server server;
 Client client;
@@ -29,6 +31,10 @@ void setup() {
   
   files = new SoundFile[9];
   
+  // Initiate phone control
+  oscHandler = new OscHandler();
+  
+  // Arduino or computer input
   if (!sim) {
     int portNumber = 1;
     String portName = Serial.list()[portNumber];
