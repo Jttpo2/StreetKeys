@@ -18,10 +18,8 @@ int serverPort = 5204;
 String value;
 Serial arduinoPort;
 int portRate = 9600;
-//boolean firstContact = true;
-//boolean firstContact = false;
 
-SoundFile[] files;
+Sound[] files;
 
 // ***** Arduiono Protocol **********
 //String oneDown = "B1D";
@@ -29,14 +27,12 @@ SoundFile[] files;
 char terminator = '\n';
 
 void setup() {
-  
-  files = new SoundFile[9];
+  files = new Sound[9];
   
   // Initiate phone control
   if (phoneControl) {
     oscHandler = new OscHandler();
   }
-  
   
   // Arduino or computer input
   if (!sim) {
@@ -48,14 +44,17 @@ void setup() {
     server = new Server(this, serverPort);
   }
   
+  // Screen Setup
   size(200, 200);
   background(255,60,50);
  
   // *********** SoundFiles **************************** 
   // Load soundfiles from the /data folder of the sketch
-  int fileAmount = 8;
+  final int fileAmount = 8;
   for (int i=0; i<fileAmount; i++) {
-    files[i] = new SoundFile(this, (i+1) + ".wav");
+    //files[i] = new SoundFile(this, (i+1) + ".wav");
+    SoundFile newFile = new SoundFile(this, (i+1) + ".wav"); 
+    files[i] = new Sound(newFile);
   }
 }    
 
@@ -67,27 +66,8 @@ void draw() {
       value = client.readStringUntil(terminator);
       handleInput(value);
     }
-    
   }
 }
-
-  // Play file with correct rate, despite its sample rate 
-void playSound(SoundFile file) {
-  if (file == null) {
-    println("Sound file missing");
-    return;
-  }
-  float rate = getPlayRate(file);
-  file.rate(rate);
-  file.play();
-}
-
-float getPlayRate(SoundFile file) {
-  int sampleRate = file.sampleRate();
-    float playRate = 44100 / sampleRate;
-    playRate = 1/playRate;
-    return playRate;
-} 
 
 // Handles all events from the serial port
 void serialEvent(Serial arduinoPort) {
@@ -107,10 +87,11 @@ void handleInput(String value) {
         int buttonNumber = Character.getNumericValue(secondChar);
         if (thirdChar == 'D') {
           if (files[buttonNumber] != null) {
-            playSound(files[buttonNumber]);
+            //playSound(files[buttonNumber]);
+            files[buttonNumber].play();
             // Tell the arduino the duration of the sample
             //println(files[buttonNumber].duration());
-            String message = "B" + buttonNumber + files[buttonNumber].duration() + terminator;
+            String message = "B" + buttonNumber + files[buttonNumber].duration + terminator;
             //println("To arduino: " + message);
             if (!sim) {
               arduinoPort.write(message);
