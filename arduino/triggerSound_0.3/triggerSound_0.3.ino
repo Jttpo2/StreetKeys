@@ -59,6 +59,13 @@ class Led {
     return "Led, pin: " + String(pinNumber) + " Brightness: " + brightness;
   }
 
+class Button {
+  private:
+
+  public:
+  
+};
+
 
 // ************************* Main Class ****************************
 
@@ -73,7 +80,6 @@ long lastDebounceTime = 0;  // the last time the output pin was toggled
 long debounceDelay = 50;    // the debounce time; increase if the output flickers
 
 // Processing communication
-//String value;
 String buttonDown = "B0D";
 String buttonUp = "B0U";
 char terminator = '\n';
@@ -82,16 +88,12 @@ char terminator = '\n';
 const int LED_AMOUNT= 9;
 float fadeAmount[LED_AMOUNT];
 const int FADE_INTERVAL = 30; // fade adjustment interval
-unsigned long currentMillis = 0;
-unsigned long previousMillis = 0;
-//float sampleLength = 0;
+unsigned long currentTime;
+unsigned long previousTime;
 
 Led *leds[LED_AMOUNT];
 
 float multiplier = 1.003; // To shorten or lengthen the led fading times slightly
-
-// Led timer - for diagnostics
-unsigned long ledTimer = 0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -103,6 +105,8 @@ void setup() {
 
   // LED array
   leds[0] = new Led(ledPin);
+
+  currentTime = previousTime = millis();
 }
 
 void loop() {
@@ -173,8 +177,8 @@ void actOnMessage(String message) {
 }
 
 void checkFadeTimer() {
-  if (currentMillis - previousMillis >= FADE_INTERVAL) {
-    previousMillis = currentMillis;
+  if (currentTime - previousTime >= FADE_INTERVAL) {
+    previousTime = currentTime;
     fadeLeds();
   }
 }
