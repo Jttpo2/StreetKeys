@@ -79,7 +79,6 @@ String buttonUp = "B1U";
 char terminator = '\n';
 
 // LED setup
-//float brightness = 0;
 float fadeAmount;
 const int interval = 30; // fade adjustment interval
 unsigned long currentMillis = 0;
@@ -102,8 +101,8 @@ void setup() {
   // Init serial communication
   Serial.begin(9600);
 
-  Led* newLed = new Led(ledPin);
-  leds[0] = newLed;
+  // LED array
+  leds[0] = new Led(ledPin);
 }
 
 void loop() {
@@ -134,8 +133,6 @@ void loop() {
         if (buttonState == HIGH) {
           // ****** Do something when button is pressed *****
           Serial.println(buttonDown);
-//          brightness = 255;
-//          ledTimer = millis(); // For measuring led on time
         } else {
           // ****** Do something when button is released *****
           Serial.println(buttonUp);
@@ -148,10 +145,9 @@ void loop() {
   lastButtonState = reading;
 
   readSerial();
-  
+
   currentMillis = millis();
   checkFadeTimer();
-//  checkIfLedTimerDone();
 }
 
 // Receive from Processing 
@@ -172,32 +168,16 @@ void startLedFade(float sampleLength) {
   Serial.println("FadeAmount: " + String(fadeAmount) + " Interval: " + interval + " Modified sample length: " +  modifiedSampleLength);
 }
 
-// For measuring how long the light is actually on for
-//void checkIfLedTimerDone() {
-//  // Led timer
-//  if (0 < brightness && brightness < 2) {
-////    Serial.println("SampleLength: " + String(sampleLength));
-////    Serial.println("Measured Duration: " + String(currentMillis - ledTimer));
-//    ledTimer = currentMillis;
-//  }
-//}
-
 float getDuration(String str) {
   String duration = str.substring(2);
   Serial.println("Duration: " + duration);
   return duration.toFloat();
 }
 
-
 void checkFadeTimer() {
   if (currentMillis - previousMillis >= interval && leds[0]) {
     previousMillis = currentMillis;
-//    leds[0]->turnOn(brightness);
-//    analogWrite(ledPin, brightness);
     leds[0]->fade(fadeAmount);
-//    fade(0, fadeAmount);
     Serial.println("Time for fade, brightness: " + String(leds[0]->brightness) + " fade: " + fadeAmount  );
   }
 }
-
-
