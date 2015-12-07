@@ -66,7 +66,7 @@ class Led {
 class Button {
   private:
     int buttonState = LOW;             // the current reading from the input pin
-    int lastButtonState = LOW;   // the previous reading from the input pin  
+    int lastButtonState = HIGH;   // the previous reading from the input pin  
     // Debouncing
     long lastDebounceTime = 0;  // the last time the output pin was toggled
     long debounceDelay = 50;    // the debounce time; increase if the output flickers
