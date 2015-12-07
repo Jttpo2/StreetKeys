@@ -1,3 +1,67 @@
+class Led {
+  private:
+    int pinNumber;
+    const float fullBrightness = 255;
+    
+  public: 
+    float brightness;
+    Led(int pinNumber);
+    Led(int pinNumber, float b);
+    void turnOn();
+    void turnOn(float b);
+    void turnOff();
+    boolean isOn();
+    void fade(float fadeAmount);
+    String toString();
+};
+
+  Led::Led(int pinNumber) {
+    this->pinNumber = pinNumber;
+    this->brightness = 0;
+  }
+
+  Led::Led(int pinNumber, float b) {
+    this->pinNumber = pinNumber;
+    this->brightness = b;
+  }
+  
+  void Led::turnOn() {
+    this->brightness = fullBrightness;
+    analogWrite(this->pinNumber, this->brightness);
+  }
+
+  void Led::turnOn (float b) {
+    this->brightness = b;
+    analogWrite(this->pinNumber, this->brightness);
+  }
+    
+  void Led::turnOff() {
+    this->brightness = 0;
+    analogWrite(this->pinNumber, this->brightness);
+  }
+
+  boolean Led::isOn() {
+    return this-> brightness > 0;
+  }
+
+  // Fade a led some
+  void Led::fade(float fadeAmount) {
+//    Serial.println("Fade: " + String(fadeAmount));
+    this->brightness -= fadeAmount;
+    if (this->brightness < 0) {
+      this->brightness = 0;
+    }
+    Serial.println("Brightness after: " + String(this->brightness));
+    this->turnOn(this->brightness);
+  }
+
+  String Led::toString() {
+    return "Led, pin: " + String(pinNumber) + " Brightness: " + brightness;
+  }
+
+
+// ************************* Main Class ****************************
+
 const int buttonPin = 9;
 const int ledPin = 13;      // the number of the LED pin
 
@@ -15,12 +79,15 @@ String buttonUp = "B1U";
 char terminator = '\n';
 
 // LED setup
-float brightness = 0;
+//float brightness = 0;
 float fadeAmount;
 const int interval = 30; // fade adjustment interval
 unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
 float sampleLength = 0;
+
+const int ledsAmount = 9;
+Led *leds[ledsAmount];
 
 float multiplier = 1.003; // To shorten or lengthen the led fading times slightly
 
@@ -34,6 +101,9 @@ void setup() {
   pinMode(ledPin, OUTPUT);
   // Init serial communication
   Serial.begin(9600);
+
+  Led* newLed = new Led(ledPin);
+  leds[0] = newLed;
 }
 
 void loop() {
@@ -64,7 +134,7 @@ void loop() {
         if (buttonState == HIGH) {
           // ****** Do something when button is pressed *****
           Serial.println(buttonDown);
-          brightness = 255;
+//          brightness = 255;
 //          ledTimer = millis(); // For measuring led on time
         } else {
           // ****** Do something when button is released *****
@@ -81,7 +151,7 @@ void loop() {
   
   currentMillis = millis();
   checkFadeTimer();
-  checkIfLedTimerDone();
+//  checkIfLedTimerDone();
 }
 
 // Receive from Processing 
@@ -96,27 +166,21 @@ void readSerial() {
 }
 
 void startLedFade(float sampleLength) {
+  leds[0]->turnOn();
   float modifiedSampleLength = sampleLength * multiplier;
   fadeAmount = 255.0 / (modifiedSampleLength / interval); // map fading interval times to analog output amount
   Serial.println("FadeAmount: " + String(fadeAmount) + " Interval: " + interval + " Modified sample length: " +  modifiedSampleLength);
 }
 
-// Fade a led some
-void fade(int ledNumber, float amount) {
-  brightness -= amount;
-    if (brightness < 0) {
-      brightness = 0;
-    }
-}
-
-void checkIfLedTimerDone() {
-  // Led timer
-  if (0 < brightness && brightness < 2) {
-//    Serial.println("SampleLength: " + String(sampleLength));
-//    Serial.println("Measured Duration: " + String(currentMillis - ledTimer));
-    ledTimer = currentMillis;
-  }
-}
+// For measuring how long the light is actually on for
+//void checkIfLedTimerDone() {
+//  // Led timer
+//  if (0 < brightness && brightness < 2) {
+////    Serial.println("SampleLength: " + String(sampleLength));
+////    Serial.println("Measured Duration: " + String(currentMillis - ledTimer));
+//    ledTimer = currentMillis;
+//  }
+//}
 
 float getDuration(String str) {
   String duration = str.substring(2);
@@ -124,13 +188,16 @@ float getDuration(String str) {
   return duration.toFloat();
 }
 
-// For measuring how long the light is actually on for
+
 void checkFadeTimer() {
-  if (currentMillis - previousMillis >= interval && brightness >= 0) {
+  if (currentMillis - previousMillis >= interval && leds[0]) {
     previousMillis = currentMillis;
-    analogWrite(ledPin, brightness);
-    fade(0, fadeAmount);
-    Serial.println("Time for fade, brightness: " + String(brightness) + " fade: " + fadeAmount  );
+//    leds[0]->turnOn(brightness);
+//    analogWrite(ledPin, brightness);
+    leds[0]->fade(fadeAmount);
+//    fade(0, fadeAmount);
+    Serial.println("Time for fade, brightness: " + String(leds[0]->brightness) + " fade: " + fadeAmount  );
   }
 }
+
 
