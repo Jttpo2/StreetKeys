@@ -129,26 +129,26 @@ class Button {
 
 
 // ************************* Main Class ****************************
+/*
+ * Protocol for coms with Processing:
+ * B4D - Button number 4 down
+ * B1U - Button number 1 up
+ */
 
 const int buttonPin = 9;
 const int ledPin = 13;      // the number of the LED pin
 
-// Processing communication
-String buttonDown = "B0D";
-String buttonUp = "B0U";
-char terminator = '\n';
-const int BUTTON_AMOUNT = 9;
-
-// LED setup
-const int LED_AMOUNT= BUTTON_AMOUNT;
-float fadeAmount[LED_AMOUNT];
-const int FADE_INTERVAL = 30; // fade adjustment interval
 unsigned long currentTime;
-unsigned long previousFadeTime;
 
-Led *leds[LED_AMOUNT];
+const int BUTTON_AMOUNT = 9;
 Button *buttons[BUTTON_AMOUNT];
 
+// LEDs setup
+const int LED_AMOUNT= BUTTON_AMOUNT;
+Led *leds[LED_AMOUNT];
+float fadeAmount[LED_AMOUNT]; // Last calculated fading amount for all LEDs
+const int FADE_INTERVAL = 30; // Fade adjustment interval
+unsigned long previousFadeTime;
 float multiplier = 1.003; // To shorten or lengthen the led fading times slightly
 
 void setup() {
