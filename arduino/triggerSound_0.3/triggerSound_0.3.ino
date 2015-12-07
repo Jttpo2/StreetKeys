@@ -73,9 +73,9 @@ long lastDebounceTime = 0;  // the last time the output pin was toggled
 long debounceDelay = 50;    // the debounce time; increase if the output flickers
 
 // Processing communication
-String value;
-String buttonDown = "B1D";
-String buttonUp = "B1U";
+//String value;
+String buttonDown = "B0D";
+String buttonUp = "B0U";
 char terminator = '\n';
 
 // LED setup
@@ -144,20 +144,26 @@ void loop() {
   // it'll be the lastButtonState:
   lastButtonState = reading;
 
-  readSerial();
+  String value = readSerial();
+  actOnMessage(value);
 
   currentMillis = millis();
   checkFadeTimer();
 }
 
+void actOnMessage(String message) {
+  if (!message.equals("")) {
+    float sampleLDuration = getSampleDuration(message);
+    startLedFade(leds[0], sampleLDuration);
+  }
+}
+
 // Receive from Processing 
-void readSerial() {
+String readSerial() {
   if (Serial.available() > 0) {
-    value = Serial.readStringUntil(terminator); 
-    float sampleLengthInSeconds = getSampleDuration(value);
-    sampleLength = (sampleLengthInSeconds * 1000);
-  Serial.println(sampleLength);
-    startLedFade(leds[0], sampleLength);
+    return Serial.readStringUntil(terminator); 
+  } else {
+    return "";
   }
 }
 
@@ -165,8 +171,6 @@ void startLedFade(Led *led, float sampleLength) {
   led->turnOn();
   fadeAmount = calcFadeAmount(sampleLength, FADE_INTERVAL);
 }
-
-
 
 void checkFadeTimer() {
   if (currentMillis - previousMillis >= FADE_INTERVAL && leds[0]) {
@@ -178,11 +182,18 @@ void checkFadeTimer() {
 
 // ************ Helpers *****************
 
+// Extract LED number duration from protocol string
+int getLedNumber(String str) {
+  Serial.println("Led: " + str.substring(1,2));
+  return str.substring(1,2).toInt();
+}
+
 // Extract sample duration from protocol string
-float getSampleDuration(String str) {
-  String duration = str.substring(2);
-  Serial.println("Duration: " + duration);
-  return duration.toFloat();
+float getSampleDuration(String message) {
+  String sampleLengthInSeconds = message.substring(2);
+  float duration = (sampleLengthInSeconds.toFloat() * 1000);
+  Serial.println("Duration: " + String(duration));
+  return duration;
 }
 
 // Calculate amount to fade an LED for the interval given to end up at zero when the sample runs out
