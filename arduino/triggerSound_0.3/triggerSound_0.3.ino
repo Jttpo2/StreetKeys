@@ -51,7 +51,7 @@ class Led {
     if (this->brightness < 0) {
       this->brightness = 0;
     }
-    Serial.println("Brightness after: " + String(this->brightness));
+//    Serial.println("Brightness after: " + String(this->brightness));
     this->turnOn(this->brightness);
   }
 
@@ -80,13 +80,13 @@ char terminator = '\n';
 
 // LED setup
 float fadeAmount;
-const int interval = 30; // fade adjustment interval
+const int FADE_INTERVAL = 30; // fade adjustment interval
 unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
 float sampleLength = 0;
 
-const int ledsAmount = 9;
-Led *leds[ledsAmount];
+const int LED_AMOUNT= 9;
+Led *leds[LED_AMOUNT];
 
 float multiplier = 1.003; // To shorten or lengthen the led fading times slightly
 
@@ -154,30 +154,41 @@ void loop() {
 void readSerial() {
   if (Serial.available() > 0) {
     value = Serial.readStringUntil(terminator); 
-    float sampleLengthInSeconds = getDuration(value);
+    float sampleLengthInSeconds = getSampleDuration(value);
     sampleLength = (sampleLengthInSeconds * 1000);
-//  Serial.println(sampleLength);
-    startLedFade(sampleLength);
+  Serial.println(sampleLength);
+    startLedFade(leds[0], sampleLength);
   }
 }
 
-void startLedFade(float sampleLength) {
-  leds[0]->turnOn();
-  float modifiedSampleLength = sampleLength * multiplier;
-  fadeAmount = 255.0 / (modifiedSampleLength / interval); // map fading interval times to analog output amount
-  Serial.println("FadeAmount: " + String(fadeAmount) + " Interval: " + interval + " Modified sample length: " +  modifiedSampleLength);
+void startLedFade(Led *led, float sampleLength) {
+  led->turnOn();
+  fadeAmount = calcFadeAmount(sampleLength, FADE_INTERVAL);
 }
 
-float getDuration(String str) {
+
+
+void checkFadeTimer() {
+  if (currentMillis - previousMillis >= FADE_INTERVAL && leds[0]) {
+    previousMillis = currentMillis;
+    leds[0]->fade(fadeAmount);
+//    Serial.println("Time for fade, brightness: " + String(leds[0]->brightness) + " fade: " + fadeAmount  );
+  }
+}
+
+// ************ Helpers *****************
+
+// Extract sample duration from protocol string
+float getSampleDuration(String str) {
   String duration = str.substring(2);
   Serial.println("Duration: " + duration);
   return duration.toFloat();
 }
 
-void checkFadeTimer() {
-  if (currentMillis - previousMillis >= interval && leds[0]) {
-    previousMillis = currentMillis;
-    leds[0]->fade(fadeAmount);
-    Serial.println("Time for fade, brightness: " + String(leds[0]->brightness) + " fade: " + fadeAmount  );
-  }
+// Calculate amount to fade an LED for the interval given to end up at zero when the sample runs out
+float calcFadeAmount(float sampleLength, int fadeInterval) {
+  float modifiedSampleLength = sampleLength * multiplier;
+  float fadeAmount = 255.0 / (modifiedSampleLength / fadeInterval); // map fading interval times to analog output amount
+  Serial.println("FadeAmount: " + String(fadeAmount) + " Interval: " + fadeInterval + " Modified sample length: " +  modifiedSampleLength);
+  return fadeAmount;
 }
