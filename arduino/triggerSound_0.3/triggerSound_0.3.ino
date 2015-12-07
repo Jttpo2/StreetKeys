@@ -79,13 +79,13 @@ String buttonUp = "B0U";
 char terminator = '\n';
 
 // LED setup
-float fadeAmount;
+const int LED_AMOUNT= 9;
+float fadeAmount[LED_AMOUNT];
 const int FADE_INTERVAL = 30; // fade adjustment interval
 unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
-float sampleLength = 0;
+//float sampleLength = 0;
 
-const int LED_AMOUNT= 9;
 Led *leds[LED_AMOUNT];
 
 float multiplier = 1.003; // To shorten or lengthen the led fading times slightly
@@ -108,6 +108,8 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
 
+  currentTime = millis();
+
 // ******** Debouncing **********
   int reading = digitalRead(buttonPin);
   // check to see if you just pressed the button
@@ -117,10 +119,10 @@ void loop() {
   // If the switch changed, due to noise or pressing:
   if (reading != lastButtonState) {
     // reset the debouncing timer
-    lastDebounceTime = millis();
+    lastDebounceTime = currentTime;
   }
 
-  if ((millis() - lastDebounceTime) > debounceDelay) {
+  if ((currentTime - lastDebounceTime) > debounceDelay) {
     // whatever the reading is at, it's been there for longer
     // than the debounce delay, so take it as the actual current state:
 
@@ -146,16 +148,8 @@ void loop() {
 
   String value = readSerial();
   actOnMessage(value);
-
-  currentMillis = millis();
+  
   checkFadeTimer();
-}
-
-void actOnMessage(String message) {
-  if (!message.equals("")) {
-    float sampleLDuration = getSampleDuration(message);
-    startLedFade(leds[0], sampleLDuration);
-  }
 }
 
 // Receive from Processing 
@@ -167,17 +161,30 @@ String readSerial() {
   }
 }
 
-void startLedFade(Led *led, float sampleLength) {
-  led->turnOn();
-  fadeAmount = calcFadeAmount(sampleLength, FADE_INTERVAL);
+void actOnMessage(String message) {
+  if (!message.equals("")) {
+    int ledNumber = getLedNumber(message);
+    float sampleDuration = getSampleDuration(message);
+    if (leds[ledNumber]) {
+      leds[ledNumber]->turnOn();
+      fadeAmount[ledNumber] = calcFadeAmount(sampleDuration, FADE_INTERVAL);  
+    }
+  }
 }
 
 void checkFadeTimer() {
-  if (currentMillis - previousMillis >= FADE_INTERVAL && leds[0]) {
+  if (currentMillis - previousMillis >= FADE_INTERVAL) {
     previousMillis = currentMillis;
-    leds[0]->fade(fadeAmount);
-//    Serial.println("Time for fade, brightness: " + String(leds[0]->brightness) + " fade: " + fadeAmount  );
+    fadeLeds();
   }
+}
+
+void fadeLeds() {
+  for (int i=0; i<LED_AMOUNT; i++) {
+      if (leds[i]) {
+        leds[i]->fade(fadeAmount[i]);   
+      }
+    }
 }
 
 // ************ Helpers *****************
