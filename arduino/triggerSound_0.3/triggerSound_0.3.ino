@@ -18,15 +18,16 @@ String buttonUp = "B1U";
 char terminator = '\n';
 
 // LED setup
-int brightness = 0;
-float brightnessFloat;
-int fadeAmount;
-int fadeAmountFloat;
+float brightness = 0;
+//float brightnessFloat;
+float fadeAmount;
+//float fadeAmountFloat;
 const int interval = 30; // fade adjustment interval
 unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
 float sampleLength = 0;
-float multiplier = 0.8; // To shorten the led fading times slightly
+
+float multiplier = 1.003; // To shorten or lengthen the led fading times slightly
 
 // Led timer
 unsigned long ledTimer = 0;
