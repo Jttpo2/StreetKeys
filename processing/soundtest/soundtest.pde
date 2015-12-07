@@ -19,7 +19,7 @@ String value;
 Serial arduinoPort;
 int portRate = 9600;
 
-Sound[] files;
+Sound[] sounds;
 
 // ***** Arduiono Protocol **********
 //String oneDown = "B1D";
@@ -27,7 +27,7 @@ Sound[] files;
 char terminator = '\n';
 
 void setup() {
-  files = new Sound[9];
+  sounds = new Sound[9];
   
   // Initiate phone control
   if (phoneControl) {
@@ -52,9 +52,8 @@ void setup() {
   // Load soundfiles from the /data folder of the sketch
   final int fileAmount = 8;
   for (int i=0; i<fileAmount; i++) {
-    //files[i] = new SoundFile(this, (i+1) + ".wav");
     SoundFile newFile = new SoundFile(this, (i+1) + ".wav"); 
-    files[i] = new Sound(newFile);
+    sounds[i] = new Sound(newFile);
   }
 }    
 
@@ -66,6 +65,14 @@ void draw() {
       value = client.readStringUntil(terminator);
       handleInput(value);
     }
+  }
+  
+  // Give sounds a chance to loop or stop
+  for (Sound s: sounds) {
+    if (s != null) {
+      s.update();
+    }
+    
   }
 }
 
@@ -85,14 +92,11 @@ void handleInput(String value) {
         char secondChar = value.charAt(1);
         char thirdChar = value.charAt(2);
         int buttonNumber = Character.getNumericValue(secondChar);
-        if (files[buttonNumber] != null) {
+        if (sounds[buttonNumber] != null) {
           if (thirdChar == 'D') {
-          
-            //playSound(files[buttonNumber]);
-            files[buttonNumber].play();
+            sounds[buttonNumber].loop();
             // Tell the arduino the duration of the sample
-            //println(files[buttonNumber].duration());
-            String message = "B" + buttonNumber + files[buttonNumber].duration + terminator;
+            String message = "B" + buttonNumber + sounds[buttonNumber].duration + terminator;
             //println("To arduino: " + message);
             if (!sim) {
               arduinoPort.write(message);
@@ -101,6 +105,8 @@ void handleInput(String value) {
             }
           } else if (thirdChar == 'U') {
           // Button released
+            sounds[buttonNumber].stopAfterCurrent();
+            
           }
         } else {
           println("Sound file missing");
