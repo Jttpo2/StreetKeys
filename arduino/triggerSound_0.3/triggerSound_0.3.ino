@@ -140,6 +140,8 @@ const int ledPin = 13;      // the number of the LED pin
 
 unsigned long currentTime;
 
+char terminator = '\n'; // Processing protocol end of message
+
 const int BUTTON_AMOUNT = 9;
 Button *buttons[BUTTON_AMOUNT];
 

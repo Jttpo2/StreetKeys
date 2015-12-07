@@ -85,8 +85,9 @@ void handleInput(String value) {
         char secondChar = value.charAt(1);
         char thirdChar = value.charAt(2);
         int buttonNumber = Character.getNumericValue(secondChar);
-        if (thirdChar == 'D') {
-          if (files[buttonNumber] != null) {
+        if (files[buttonNumber] != null) {
+          if (thirdChar == 'D') {
+          
             //playSound(files[buttonNumber]);
             files[buttonNumber].play();
             // Tell the arduino the duration of the sample
@@ -98,13 +99,12 @@ void handleInput(String value) {
             } else {
               server.write(message);
             }
-          } else {
-            println("Sound file missing");
+          } else if (thirdChar == 'U') {
+          // Button released
           }
-          
-         } else if (thirdChar == 'U') {
-          // Button released 
-         }
+        } else {
+          println("Sound file missing");
+        }
+      }
     }
   }
-}
