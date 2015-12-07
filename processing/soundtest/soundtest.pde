@@ -4,7 +4,7 @@ import processing.net.*;
 
 // Toggles simulation environment, 
 // processing to processing instead of arduino to processing
-boolean sim = true; 
+boolean sim = false; 
 
 OscHandler oscHandler;
 
@@ -107,6 +107,7 @@ void handleInput(String value) {
             // Tell the arduino the duration of the sample
             //println(files[buttonNumber].duration());
             String message = "B" + buttonNumber + files[buttonNumber].duration() + terminator;
+            //println("To arduino: " + message);
             if (!sim) {
               arduinoPort.write(message);
             } else {
