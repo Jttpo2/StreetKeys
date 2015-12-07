@@ -4,7 +4,8 @@ import processing.net.*;
 
 // Toggles simulation environment, 
 // processing to processing instead of arduino to processing
-boolean sim = false; 
+boolean sim = false;
+boolean phoneControl = false;
 
 OscHandler oscHandler;
 
@@ -32,7 +33,10 @@ void setup() {
   files = new SoundFile[9];
   
   // Initiate phone control
-  oscHandler = new OscHandler();
+  if (phoneControl) {
+    oscHandler = new OscHandler();
+  }
+  
   
   // Arduino or computer input
   if (!sim) {
