@@ -16,11 +16,15 @@ class Led {
 };
 
   Led::Led(int pinNumber) {
+    // initialize the LED pin as an output:
+    pinMode(pinNumber, OUTPUT);
     this->pinNumber = pinNumber;
     this->brightness = 0;
   }
 
   Led::Led(int pinNumber, float b) {
+    // initialize the LED pin as an output:
+    pinMode(pinNumber, OUTPUT);
     this->pinNumber = pinNumber;
     this->brightness = b;
   }
@@ -61,10 +65,67 @@ class Led {
 
 class Button {
   private:
-
-  public:
+    int buttonState = LOW;             // the current reading from the input pin
+    int lastButtonState = LOW;   // the previous reading from the input pin  
+    // Debouncing
+    long lastDebounceTime = 0;  // the last time the output pin was toggled
+    long debounceDelay = 50;    // the debounce time; increase if the output flickers
   
+  public:
+    int id;
+    int pinNumber;
+    Button(int pinNumber, int id);
+    void update();
 };
+
+  Button::Button(int pinNumber, int id) {
+    pinMode(pinNumber, INPUT);
+    this->pinNumber = pinNumber;
+    this->id = id;
+  }
+
+  void Button::update() {
+    // ******** Debouncing **********
+    
+    int reading = digitalRead(this->pinNumber);
+    // check to see if you just pressed the button
+    // (i.e. the input went from LOW to HIGH),  and you've waited
+    // long enough since the last press to ignore any noise:
+  
+    // If the switch changed, due to noise or pressing:
+    if (reading != this->lastButtonState) {
+      // reset the debouncing timer
+      this->lastDebounceTime = millis();
+    }
+  
+    if ((millis() - this->lastDebounceTime) > this->debounceDelay) {
+      // whatever the reading is at, it's been there for longer
+      // than the debounce delay, so take it as the actual current state:
+  
+      // if the button state has changed:
+      if (reading != this->buttonState) {
+          this->buttonState = reading;
+  
+          // only toggle the LED if the new button state is HIGH
+          // Send correct button state to processing
+          if (this->buttonState == HIGH) {
+            // ****** Do something when button is pressed *****
+            String downMessage = "B" + String(id) + "D";
+            // Send to processing
+            Serial.println(downMessage);
+          } else {
+            // ****** Do something when button is released *****
+            String upMessage = "B" + String(id) + "U";
+            // Send to processing
+            Serial.println(upMessage);
+          }
+      }
+    }
+  
+    // save the reading.  Next time through the loop,
+    // it'll be the lastButtonState:
+    this->lastButtonState = reading;
+    }
 
 
 // ************************* Main Class ****************************
@@ -72,84 +133,43 @@ class Button {
 const int buttonPin = 9;
 const int ledPin = 13;      // the number of the LED pin
 
-int buttonState = LOW;             // the current reading from the input pin
-int lastButtonState = LOW;   // the previous reading from the input pin
-
-// Debouncing
-long lastDebounceTime = 0;  // the last time the output pin was toggled
-long debounceDelay = 50;    // the debounce time; increase if the output flickers
-
 // Processing communication
 String buttonDown = "B0D";
 String buttonUp = "B0U";
 char terminator = '\n';
+const int BUTTON_AMOUNT = 9;
 
 // LED setup
-const int LED_AMOUNT= 9;
+const int LED_AMOUNT= BUTTON_AMOUNT;
 float fadeAmount[LED_AMOUNT];
 const int FADE_INTERVAL = 30; // fade adjustment interval
 unsigned long currentTime;
-unsigned long previousTime;
+unsigned long previousFadeTime;
 
 Led *leds[LED_AMOUNT];
+Button *buttons[BUTTON_AMOUNT];
 
 float multiplier = 1.003; // To shorten or lengthen the led fading times slightly
 
 void setup() {
-  // put your setup code here, to run once:
-  pinMode(buttonPin, INPUT);
-  // initialize the LED pin as an output:
-  pinMode(ledPin, OUTPUT);
   // Init serial communication
   Serial.begin(9600);
 
-  // LED array
+  // Init arrays
   leds[0] = new Led(ledPin);
+  buttons[0] = new Button(buttonPin, 0);
 
-  currentTime = previousTime = millis();
+  currentTime = previousFadeTime = millis();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-
   currentTime = millis();
 
-// ******** Debouncing **********
-  int reading = digitalRead(buttonPin);
-  // check to see if you just pressed the button
-  // (i.e. the input went from LOW to HIGH),  and you've waited
-  // long enough since the last press to ignore any noise:
-
-  // If the switch changed, due to noise or pressing:
-  if (reading != lastButtonState) {
-    // reset the debouncing timer
-    lastDebounceTime = currentTime;
+  // Update button states
+  for (int i=0; i<BUTTON_AMOUNT; i++) {
+    buttons[i]->update();
   }
-
-  if ((currentTime - lastDebounceTime) > debounceDelay) {
-    // whatever the reading is at, it's been there for longer
-    // than the debounce delay, so take it as the actual current state:
-
-    // if the button state has changed:
-    if (reading != buttonState) {
-        buttonState = reading;
-
-        // only toggle the LED if the new button state is HIGH
-        // Send correct button state to processing
-        if (buttonState == HIGH) {
-          // ****** Do something when button is pressed *****
-          Serial.println(buttonDown);
-        } else {
-          // ****** Do something when button is released *****
-          Serial.println(buttonUp);
-        }
-    }
-  }
-
-  // save the reading.  Next time through the loop,
-  // it'll be the lastButtonState:
-  lastButtonState = reading;
-
+  
   String value = readSerial();
   actOnMessage(value);
   
@@ -177,8 +197,8 @@ void actOnMessage(String message) {
 }
 
 void checkFadeTimer() {
-  if (currentTime - previousTime >= FADE_INTERVAL) {
-    previousTime = currentTime;
+  if (currentTime - previousFadeTime >= FADE_INTERVAL) {
+    previousFadeTime = currentTime;
     fadeLeds();
   }
 }
