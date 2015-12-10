@@ -1,4 +1,7 @@
-class Sound {
+import java.util.Observable;
+
+class Sound extends Observable {
+  final int id;
   SoundFile file;
   float duration;
   boolean isPlaying;
@@ -10,11 +13,12 @@ class Sound {
   // so looping sounds smoother
   final static int modifier = 50; 
   
-  Sound(SoundFile file) {
+  Sound(final SoundFile file, final int id) {
     this.file = file;
     duration = file.duration();
     isPlaying = false;
     loop = false;
+    this.id = id;
   }
   
   void play() {
@@ -40,6 +44,7 @@ class Sound {
     file.play();
     startTime = millis();
     isPlaying = true;
+    this.notifyObservers();
   }
   
   float getPlayRate() {

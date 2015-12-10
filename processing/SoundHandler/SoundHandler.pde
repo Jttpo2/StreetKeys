@@ -8,6 +8,7 @@ boolean sim = false;
 boolean phoneControl = false;
 
 OscHandler oscHandler;
+SoundObserver soundObserver;
 
 // Server for simulation
 Server server;
@@ -28,6 +29,7 @@ char terminator = '\n';
 
 void setup() {
   sounds = new Sound[9];
+  soundObserver= new SoundObserver(this);
   
   // Initiate phone control
   if (phoneControl) {
@@ -53,7 +55,9 @@ void setup() {
   final int fileAmount = 8;
   for (int i=0; i<fileAmount; i++) {
     SoundFile newFile = new SoundFile(this, (i+1) + ".wav"); 
-    sounds[i] = new Sound(newFile);
+    Sound newSound = new Sound(newFile, i); 
+    newSound.addObserver(soundObserver);
+    sounds[i] = newSound;
   }
 }    
 
@@ -72,7 +76,6 @@ void draw() {
     if (s != null) {
       s.update();
     }
-    
   }
 }
 
@@ -96,13 +99,9 @@ void handleInput(String value) {
           if (thirdChar == 'D') {
             sounds[buttonNumber].loop();
             // Tell the arduino the duration of the sample
-            String message = "B" + buttonNumber + sounds[buttonNumber].duration + terminator;
+            //String message = "B" + buttonNumber + sounds[buttonNumber].duration + terminator;
             //println("To arduino: " + message);
-            if (!sim) {
-              arduinoPort.write(message);
-            } else {
-              server.write(message);
-            }
+            
           } else if (thirdChar == 'U') {
           // Button released
             sounds[buttonNumber].stopAfterCurrent();
@@ -112,5 +111,15 @@ void handleInput(String value) {
           println("Sound file missing");
         }
       }
+    }
+  }
+  
+  void communicate(Sound sound) {
+    String message = "B" + sound.id + sound.duration + terminator;
+    // Tell the arduino the duration of the sample
+    if (!sim) {
+      arduinoPort.write(message);
+    } else {
+      server.write(message);
     }
   }
