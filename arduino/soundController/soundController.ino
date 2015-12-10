@@ -168,6 +168,9 @@ void Button::update() {
 #define RED 0
 #define GREEN 1
 #define BLUE 2
+#define HUE 0
+#define SATURATION 1
+#define BRIGHTNESS 2
 
 unsigned long currentTime;
 
@@ -194,15 +197,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_AMOUNT, LED_STRIP_PIN, NEO_GRB +
 
 const int overallBrightness = 256;
 
-uint32_t color;
-float r = 0;
-float g = 0;
-float b = 0;
-int magentaR = 255;
-int magentaG = 0;
-int magentaB = 255;
-const uint32_t magenta = strip.Color(255, 0, 255);
-float hsb[] = {700, 255, 255};
+float hsb[] = {700, 255, 0};
 uint8_t rgb[] = {0, 0, 0};
 
 void setup() {
@@ -218,13 +213,6 @@ void setup() {
   strip.show(); // Initialize all pixels to 'off'
 
   currentTime = previousFadeTime = millis();
-
-  color = magenta;
-
-  r = magentaR;
-  g = magentaG;
-  b = magentaB;
-
 }
 
 void loop() {
@@ -239,15 +227,6 @@ void loop() {
   actOnMessage(value);
 
   checkFadeTimer();
-
-  shineLedStrip();
-}
-
-void shineLedStrip() {
-//  int n = 1;
-//  int red = 0;
-//  int green = 150;
-//  int blue = 100;
 
   strip.show();
 }
@@ -269,7 +248,7 @@ void actOnMessage(String message) {
       leds[ledNumber]->turnOn();
 
       // Turn on led strip
-      hsb[2] = 255;
+      hsb[BRIGHTNESS] = 255;
       
       fadeAmount[ledNumber] = calcFadeAmount(sampleDuration, FADE_INTERVAL);
     }
@@ -284,60 +263,16 @@ void checkFadeTimer() {
 }
 
 void fadeLeds() {
-//  float n = 2;
-//  float rStart = r;
-//  float gStart = g;
-//  float bStart = b;
-//  float rEnd = 0;
-//  float gEnd = 0;
-//  float bEnd = 0;
-//  float rNew;
-//  float gNew;
-//  float bNew;
-
-//  float fadeValue = 1;
-//  r -= fadeValue;
-//  g -= fadeValue;
-//  b -= fadeValue;
-
-//  for (int i = 0; i < n; i++) { // larger values of 'n' will give a smoother/slower transition.
-//    r = rStart + (rEnd - rStart) * (float) i / n;
-//    g = gStart + (gEnd - gStart) * (float) i / n;
-//    b = bStart + (bEnd - bStart) * (float) i / n;
-//    // set pixel color here
-//  }
-
   // convert hsb to rgb and put into rgb array
-  hsb2rgb(hsb[0], hsb[1], hsb[2], rgb);
+  hsb2rgb(hsb[HUE], hsb[SATURATION], hsb[BRIGHTNESS], rgb);
 
-  hsb[2] -= fadeAmount[0]; 
-  if (hsb[2] <= 0) {
-    hsb[2] = 0;  }
+  hsb[BRIGHTNESS] -= fadeAmount[0]; 
+  if (hsb[BRIGHTNESS] <= 0) {
+    hsb[BRIGHTNESS] = 0;  }
   
   for (int i = 0; i < LED_AMOUNT; i++) {
     strip.setPixelColor(i, rgb[RED], rgb[GREEN], rgb[BLUE]);
   }
-
-//if (r <= 0) {
-//  r = 0;
-//}
-//if (g <= 0) {
-//  g = 0;
-//}
-//if (b <=0) {
-//  b = 0;
-//}
-  
-//  if (r <= 0  || b <= 0) {
-//    r = magentaR;
-//    g = magentaG;
-//    b = magentaB;
-//  }
-
-  //  color -= fadeColor;
-//  if (color <= 0) {
-//    color = magenta;
-//  }
 
   // Individual ledpins
   for (int i = 0; i < LED_AMOUNT; i++) {
