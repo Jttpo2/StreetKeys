@@ -105,7 +105,9 @@ void handleInput(String value) {
           } else if (thirdChar == 'U') {
           // Button released
             sounds[buttonNumber].stopAfterCurrent();
-            
+          } else if (thirdChar == 'P') {
+          // Play once
+          sounds[buttonNumber].play();
           }
         } else {
           println("Sound file missing");

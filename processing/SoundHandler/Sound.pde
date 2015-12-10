@@ -44,7 +44,7 @@ class Sound extends Observable {
     file.play();
     startTime = millis();
     isPlaying = true;
-    this.notifyObservers();
+    //this.notifyObservers();
   }
   
   float getPlayRate() {
