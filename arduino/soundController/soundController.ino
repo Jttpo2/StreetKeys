@@ -267,6 +267,10 @@ void actOnMessage(String message) {
     float sampleDuration = getSampleDuration(message);
     if (leds[ledNumber]) {
       leds[ledNumber]->turnOn();
+
+      // Turn on led strip
+      hsb[2] = 255;
+      
       fadeAmount[ledNumber] = calcFadeAmount(sampleDuration, FADE_INTERVAL);
     }
   }
