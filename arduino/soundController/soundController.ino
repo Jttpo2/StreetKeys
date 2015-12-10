@@ -1,3 +1,5 @@
+// ******************* LED Class ****************************
+
 class Led {
   private:
     int pinNumber;
@@ -62,6 +64,8 @@ class Led {
   String Led::toString() {
     return "Led, pin: " + String(pinNumber) + " Brightness: " + brightness;
   }
+
+// ******************* Button Class ****************************
 
 class Button {
   private:
