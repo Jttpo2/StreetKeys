@@ -1,6 +1,71 @@
 #include <Adafruit_NeoPixel.h>
 
+#define RED 0
+#define GREEN 1
+#define BLUE 2
+#define HUE 0
+#define SATURATION 1
+#define BRIGHTNESS 2
 
+/******************************************************************************
+   accepts hue, saturation and brightness values and outputs three 8-bit color
+   values in an array (color[])
+
+   saturation (sat) and brightness (bright) are 8-bit values.
+
+   hue (index) is a value between 0 and 767. hue values out of range are
+   rendered as 0.
+
+ *****************************************************************************/
+void hsb2rgb(uint16_t index, uint8_t sat, uint8_t bright, uint8_t color[3])
+{
+  uint16_t r_temp, g_temp, b_temp;
+  uint8_t index_mod;
+  uint8_t inverse_sat = (sat ^ 255);
+
+  index = index % 768;
+  index_mod = index % 256;
+
+  if (index < 256)
+  {
+    r_temp = index_mod ^ 255;
+    g_temp = index_mod;
+    b_temp = 0;
+  }
+
+  else if (index < 512)
+  {
+    r_temp = 0;
+    g_temp = index_mod ^ 255;
+    b_temp = index_mod;
+  }
+
+  else if ( index < 768)
+  {
+    r_temp = index_mod;
+    g_temp = 0;
+    b_temp = index_mod ^ 255;
+  }
+
+  else
+  {
+    r_temp = 0;
+    g_temp = 0;
+    b_temp = 0;
+  }
+
+  r_temp = ((r_temp * sat) / 255) + inverse_sat;
+  g_temp = ((g_temp * sat) / 255) + inverse_sat;
+  b_temp = ((b_temp * sat) / 255) + inverse_sat;
+
+  r_temp = (r_temp * bright) / 255;
+  g_temp = (g_temp * bright) / 255;
+  b_temp = (b_temp * bright) / 255;
+
+  color[RED]  = (uint8_t)r_temp;
+  color[GREEN]  = (uint8_t)g_temp;
+  color[BLUE] = (uint8_t)b_temp;
+}
 
 // ******************* LED Class ****************************
 
@@ -137,21 +202,58 @@ void Button::update() {
 
 // ******************* Pad Class ****************************
 
-//class Pad {
-//  private:
-//    Button button;
-//    void turnLedsOn();
-//    void turnLedsOff();
-//  public:
-//    Pad(int id, int buttonPin, int ledRangeStart, int ledRangeEnd);
-//    void push();
-//    void release();
-//    void update();
-//};
-//
-//  Pad::Pad(int id, int buttonPin, int ledRangeStart, int ledRangeEnd) {
-//    this->button = new Button(buttonPin, id);
-//  }
+class Pad {
+  private:
+
+    Button *button;
+    int buttonPin;
+    int ledRangeStart;
+    int ledRangeEnd;
+    int *hsb; // color
+    uint8_t rgb[3] = {0,0,0};
+
+  public:
+    Adafruit_NeoPixel *strip;
+    Pad(int id, int buttonPin, Adafruit_NeoPixel *strip, int ledRangeStart, int ledRangeEnd, int *hsb);
+    void turnLedsOn();
+    void turnLedsOn(int brightness);
+    void turnLedsOff();
+    void push();
+    void release();
+    void update();
+};
+
+Pad::Pad(int id, int buttonPin, Adafruit_NeoPixel *strip, int ledRangeStart, int ledRangeEnd, int *hsb) {
+  this->strip = strip;
+  this->button = new Button(buttonPin, id);
+  this->buttonPin = buttonPin;
+  this->ledRangeStart = ledRangeStart;
+  this->ledRangeEnd = ledRangeEnd;
+  this->hsb = hsb;
+  Serial.println("Pad created");
+}
+
+void Pad::update() {
+  this->button->update();
+}
+
+void Pad::turnLedsOn() {
+  Serial.println("Leds on " + String(this->rgb[RED]));
+  this->turnLedsOn(255);
+}
+
+void Pad::turnLedsOn(int brightness) {
+  this->hsb[BRIGHTNESS] = brightness;
+
+  hsb2rgb(this->hsb[HUE], this->hsb[SATURATION], this->hsb[BRIGHTNESS], this->rgb);
+
+  for (int i = this->ledRangeStart; i < this->ledRangeEnd; i++) {
+    this->strip->setPixelColor(i, this->rgb[RED], this->rgb[GREEN], this->rgb[BLUE]);
+  }
+//  Serial.println("Turned on pad, red: " + String(this->rgb[RED]));
+  
+}
+
 
 // ************************* Main Class ****************************
 /*
@@ -161,16 +263,10 @@ void Button::update() {
 */
 
 #define LED_STRIP_PIN 6 // LED strip pin
-#define LED_AMOUNT 60
+#define LED_AMOUNT 30
 #define BUTTON_AMOUNT 9
 #define BUTTON_PIN 9
 #define LED_PIN 13      // the number of the LED pin
-#define RED 0
-#define GREEN 1
-#define BLUE 2
-#define HUE 0
-#define SATURATION 1
-#define BRIGHTNESS 2
 
 unsigned long currentTime;
 
@@ -195,20 +291,28 @@ float multiplier = 1.003; // To shorten or lengthen the led fading times slightl
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_AMOUNT, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
 
+Pad *pads[BUTTON_AMOUNT];
+
 const int overallBrightness = 256;
 
-float hsb[] = {700, 255, 0};
-uint8_t rgb[] = {0, 0, 0};
+//float hsb[] = {700, 255, 0};
+//uint8_t rgb[] = {0, 0, 0};
 
 void setup() {
   // Init serial communication
   Serial.begin(9600);
-
-  // Init arrays
-  leds[0] = new Led(LED_PIN);
-  buttons[0] = new Button(BUTTON_PIN, 0);
+  Serial.println("Initiated serial com");
 
   strip.begin();
+
+  // Init arrays
+  //  leds[0] = new Led(LED_PIN);
+  //  buttons[0] = new Button(BUTTON_PIN, 0);
+
+  int tempButtonId = 0;
+  int button0Color[] = {100, 255, 255};
+  pads[0] = new Pad(tempButtonId, BUTTON_PIN, &strip, 0, 30, button0Color);
+
   //  strip.setBrightness(overallBrightness); // set overall brightness
   strip.show(); // Initialize all pixels to 'off'
 
@@ -219,14 +323,17 @@ void loop() {
   currentTime = millis();
 
   // Update button states
-  for (int i = 0; i < BUTTON_AMOUNT; i++) {
-    buttons[i]->update();
-  }
+  //  for (int i = 0; i < BUTTON_AMOUNT; i++) {
+  //    buttons[i]->update();
+  //  }
 
   String value = readSerial();
   actOnMessage(value);
 
   checkFadeTimer();
+
+  //  pads[0]->update();
+  pads[0]->turnLedsOn();
 
   strip.show();
 }
@@ -248,8 +355,8 @@ void actOnMessage(String message) {
       leds[ledNumber]->turnOn();
 
       // Turn on led strip
-      hsb[BRIGHTNESS] = 255;
-      
+//      hsb[BRIGHTNESS] = 255;
+
       fadeAmount[ledNumber] = calcFadeAmount(sampleDuration, FADE_INTERVAL);
     }
   }
@@ -264,15 +371,16 @@ void checkFadeTimer() {
 
 void fadeLeds() {
   // convert hsb to rgb and put into rgb array
-  hsb2rgb(hsb[HUE], hsb[SATURATION], hsb[BRIGHTNESS], rgb);
-
-  hsb[BRIGHTNESS] -= fadeAmount[0]; 
-  if (hsb[BRIGHTNESS] <= 0) {
-    hsb[BRIGHTNESS] = 0;  }
-  
-  for (int i = 0; i < LED_AMOUNT; i++) {
-    strip.setPixelColor(i, rgb[RED], rgb[GREEN], rgb[BLUE]);
-  }
+//  hsb2rgb(hsb[HUE], hsb[SATURATION], hsb[BRIGHTNESS], rgb);
+//
+//  hsb[BRIGHTNESS] -= fadeAmount[0];
+//  if (hsb[BRIGHTNESS] <= 0) {
+//    hsb[BRIGHTNESS] = 0;
+//  }
+//
+//  for (int i = 0; i < LED_AMOUNT; i++) {
+//    strip.setPixelColor(i, rgb[RED], rgb[GREEN], rgb[BLUE]);
+//  }
 
   // Individual ledpins
   for (int i = 0; i < LED_AMOUNT; i++) {
@@ -306,62 +414,4 @@ float calcFadeAmount(float sampleLength, int fadeInterval) {
   return fadeAmount;
 }
 
-/******************************************************************************
- * accepts hue, saturation and brightness values and outputs three 8-bit color
- * values in an array (color[])
- *
- * saturation (sat) and brightness (bright) are 8-bit values.
- *
- * hue (index) is a value between 0 and 767. hue values out of range are
- * rendered as 0.
- *
- *****************************************************************************/
-void hsb2rgb(uint16_t index, uint8_t sat, uint8_t bright, uint8_t color[3])
-{
-  uint16_t r_temp, g_temp, b_temp;
-  uint8_t index_mod;
-  uint8_t inverse_sat = (sat ^ 255);
 
-  index = index % 768;
-  index_mod = index % 256;
-
-  if (index < 256)
-  {
-    r_temp = index_mod ^ 255;
-    g_temp = index_mod;
-    b_temp = 0;
-  }
-
-  else if (index < 512)
-  {
-    r_temp = 0;
-    g_temp = index_mod ^ 255;
-    b_temp = index_mod;
-  }
-
-  else if ( index < 768)
-  {
-    r_temp = index_mod;
-    g_temp = 0;
-    b_temp = index_mod ^ 255;
-  }
-
-  else
-  {
-    r_temp = 0;
-    g_temp = 0;
-    b_temp = 0;
-  }
-
-  r_temp = ((r_temp * sat) / 255) + inverse_sat;
-  g_temp = ((g_temp * sat) / 255) + inverse_sat;
-  b_temp = ((b_temp * sat) / 255) + inverse_sat;
-
-  r_temp = (r_temp * bright) / 255;
-  g_temp = (g_temp * bright) / 255;
-  b_temp = (b_temp * bright) / 255;
-
-  color[RED]  = (uint8_t)r_temp;
-  color[GREEN]  = (uint8_t)g_temp;
-  color[BLUE] = (uint8_t)b_temp;
-}
