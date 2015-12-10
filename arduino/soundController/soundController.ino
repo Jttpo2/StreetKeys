@@ -1,3 +1,18 @@
+#include <Adafruit_NeoPixel.h>
+
+// ******************* Pad Class ****************************
+
+class Pad {
+  private:
+    void turnLedsOn();
+    void turnLedsOff();
+  public:
+    Pad(int id, int buttonPin, int ledRangeStart, int ledRangeEnd);
+    void push();
+    void release();
+    void update();
+};
+
 // ******************* LED Class ****************************
 
 class Led {
@@ -139,32 +154,48 @@ class Button {
  * B1U - Button number 1 up
  */
 
-const int buttonPin = 9;
-const int ledPin = 13;      // the number of the LED pin
+#define LED_STRIP_PIN 6 // LED strip pin
+#define LED_AMOUNT 9
+#define BUTTON_AMOUNT 9
+#define BUTTON_PIN 9
+#define LED_PIN 13      // the number of the LED pin
 
 unsigned long currentTime;
 
 char terminator = '\n'; // Processing protocol end of message
 
-const int BUTTON_AMOUNT = 9;
 Button *buttons[BUTTON_AMOUNT];
 
 // LEDs setup
-const int LED_AMOUNT= BUTTON_AMOUNT;
 Led *leds[LED_AMOUNT];
 float fadeAmount[LED_AMOUNT]; // Last calculated fading amount for all LEDs
 const int FADE_INTERVAL = 30; // Fade adjustment interval
 unsigned long previousFadeTime;
 float multiplier = 1.003; // To shorten or lengthen the led fading times slightly
 
+// Parameter 1 = number of pixels in strip
+// Parameter 2 = pin number (most are valid)
+// Parameter 3 = pixel type flags, add together as needed:
+//   NEO_KHZ800  800 KHz bitstream (most NeoPixel products w/WS2812 LEDs)
+//   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
+//   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
+//   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_AMOUNT, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
+
+const int overallBrightness = 64;
+
 void setup() {
   // Init serial communication
   Serial.begin(9600);
 
   // Init arrays
-  leds[0] = new Led(ledPin);
-  buttons[0] = new Button(buttonPin, 0);
+  leds[0] = new Led(LED_PIN);
+  buttons[0] = new Button(BUTTON_PIN, 0);
 
+  strip.begin();
+  strip.setBrightness(overallBrightness); // set overall brightness
+  strip.show(); // Initialize all pixels to 'off'
+  
   currentTime = previousFadeTime = millis();
 }
 
@@ -180,6 +211,21 @@ void loop() {
   actOnMessage(value);
   
   checkFadeTimer();
+
+  shineLedStrip();
+}
+
+void shineLedStrip() {
+  int n = 0;
+  int red = 0;
+  int green = 150;
+  int blue = 100;
+  
+  strip.setPixelColor(n, red, green, blue);
+  uint32_t magenta = strip.Color(255, 0, 255);
+  strip.setPixelColor(n, magenta);
+  
+  strip.show();
 }
 
 // Receive from Processing 
