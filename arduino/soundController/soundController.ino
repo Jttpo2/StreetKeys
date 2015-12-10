@@ -7,6 +7,7 @@
 #define SATURATION 1
 #define BRIGHTNESS 2
 #define FULL 255
+const int FADE_INTERVAL = 30;
 
 /******************************************************************************
    accepts hue, saturation and brightness values and outputs three 8-bit color
@@ -73,7 +74,6 @@ void hsb2rgb(uint16_t index, uint8_t sat, uint8_t bright, uint8_t color[3])
 class Led {
   private:
     int pinNumber;
-    const float fullBrightness = 255;
 
   public:
     float brightness;
@@ -102,7 +102,7 @@ Led::Led(int pinNumber, float b) {
 }
 
 void Led::turnOn() {
-  this->brightness = fullBrightness;
+  this->brightness = FULL;
   analogWrite(this->pinNumber, this->brightness);
 }
 
@@ -117,7 +117,7 @@ void Led::turnOff() {
 }
 
 boolean Led::isOn() {
-  return this-> brightness > 0;
+  return this->brightness > 0;
 }
 
 // Fade a led some
@@ -213,7 +213,6 @@ class Pad {
     int *hsb; // color
     uint8_t rgb[3] = {0,0,0};
     float fadeAmount;
-    static constexpr float FADE_INTERVAL = 30; // In millis. Same for all pads
     unsigned long previousFadeTime;
     void fadeLeds();
 
@@ -271,12 +270,14 @@ void Pad::turnOnAndFade(long duration) {
 }
 
 void Pad::fadeLeds() {
-  float newBrightness = this->hsb[BRIGHTNESS] - this->fadeAmount;
-  if (newBrightness < 0) {
-    newBrightness = 0;
-  }
+  if(this->hsb[BRIGHTNESS] > 0) {
+    float newBrightness = this->hsb[BRIGHTNESS] - this->fadeAmount;
+    if (newBrightness < 0) {
+      newBrightness = 0;
+    }
 
-  this->turnLedsOn(newBrightness);
+    this->turnLedsOn(newBrightness);
+  }
 }
 
 void Pad::turnLedsOff() {
@@ -291,22 +292,24 @@ void Pad::turnLedsOff() {
 */
 
 #define LED_STRIP_PIN 6 // LED strip pin
-#define LED_AMOUNT 30
-#define BUTTON_AMOUNT 9
+#define PAD_AMOUNT 9
+#define LED_STRIP_AMOUNT 60
+
 #define BUTTON_PIN 9
-#define LED_PIN 13      // the number of the LED pin
+#define LED_PIN 13      // the number of the test LED pin
+#define LED_AMOUNT 9
 
 unsigned long currentTime;
 
 char terminator = '\n'; // Processing protocol end of message
 
-Button *buttons[BUTTON_AMOUNT];
+Button *buttons[PAD_AMOUNT];
 
 // LEDs setup
 Led *leds[LED_AMOUNT];
 float fadeAmount[LED_AMOUNT]; // Last calculated fading amount for all LEDs
 //const int FADE_INTERVAL = 30; // Fade adjustment interval
-const int FADE_INTERVAL = 30; // Fade adjustment interval
+//const int FADE_INTERVAL = 30; // Fade adjustment interval
 unsigned long previousFadeTime;
 float multiplier = 1.003; // To shorten or lengthen the led fading times slightly
 
@@ -317,11 +320,11 @@ float multiplier = 1.003; // To shorten or lengthen the led fading times slightl
 //   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
 //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_AMOUNT, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_STRIP_AMOUNT, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
 
-Pad *pads[BUTTON_AMOUNT];
+Pad *pads[PAD_AMOUNT];
 
-const int overallBrightness = 256;
+const int overallBrightness = FULL;
 
 //float hsb[] = {700, 255, 0};
 //uint8_t rgb[] = {0, 0, 0};
@@ -338,10 +341,19 @@ void setup() {
   //  buttons[0] = new Button(BUTTON_PIN, 0);
 
   int tempButtonId = 0;
-  int button0Color[] = {100, 255, 255};
-  pads[0] = new Pad(tempButtonId, BUTTON_PIN, &strip, 0, 30, button0Color);
+  int pad0Color[] = {100, 255, 255};
 
-  //  strip.setBrightness(overallBrightness); // set overall brightness
+  int buttonPins[] = {9};
+  // Pad colors in Hue, Sat, Bright
+  int padColorsHSB[][3] = {{100, 255, 255}};
+  const int LEDS_PER_PAD = 6;
+
+  // new Pad(id, pin, strip-adress, led range start, led range end, colorHSB[3])
+  for (int i=0, ledStartIndex=0, ledEndIndex=LEDS_PER_PAD; i<PAD_AMOUNT; i++, ledStartIndex+=LEDS_PER_PAD, ledEndIndex+=LEDS_PER_PAD) {
+    pads[i] = new Pad(i, buttonPins[i], &strip, ledStartIndex, ledEndIndex, padColorsHSB[i]);
+  }
+
+  strip.setBrightness(overallBrightness); // set overall brightness
   strip.show(); // Initialize all pixels to 'off'
 
   currentTime = previousFadeTime = millis();
@@ -358,12 +370,17 @@ void loop() {
   String value = readSerial();
   actOnMessage(value);
 
-  checkFadeTimer();
+  for (int i=0; i<PAD_AMOUNT; i++) {
+    pads[i]->update(currentTime);
+  }
 
-  pads[0]->update(currentTime);
+//  pads[0]->update(currentTime);
 //  pads[0]->turnLedsOn();
 
   strip.show();
+
+  // Single test LEDs
+  checkFadeTimer();
 }
 
 // Receive from Processing
@@ -412,7 +429,7 @@ void fadeLeds() {
 //    strip.setPixelColor(i, rgb[RED], rgb[GREEN], rgb[BLUE]);
 //  }
 
-  // Individual ledpins
+  // Single test LEDs
   for (int i = 0; i < LED_AMOUNT; i++) {
     if (leds[i]) {
       leds[i]->fade(fadeAmount[i]);
