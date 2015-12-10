@@ -5,7 +5,7 @@ import processing.net.*;
 // Toggles simulation environment, 
 // processing to processing instead of arduino to processing
 boolean sim = false;
-boolean phoneControl = false;
+boolean phoneControl = true;
 
 OscHandler oscHandler;
 SoundObserver soundObserver;
