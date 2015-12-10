@@ -6,6 +6,7 @@
 #define HUE 0
 #define SATURATION 1
 #define BRIGHTNESS 2
+#define FULL 255
 
 /******************************************************************************
    accepts hue, saturation and brightness values and outputs three 8-bit color
@@ -211,16 +212,19 @@ class Pad {
     int ledRangeEnd;
     int *hsb; // color
     uint8_t rgb[3] = {0,0,0};
+    float fadeAmount;
+    static constexpr float FADE_INTERVAL = 30; // In millis. Same for all pads
+    unsigned long previousFadeTime;
+    void fadeLeds();
 
   public:
     Adafruit_NeoPixel *strip;
     Pad(int id, int buttonPin, Adafruit_NeoPixel *strip, int ledRangeStart, int ledRangeEnd, int *hsb);
     void turnLedsOn();
     void turnLedsOn(int brightness);
+    void turnOnAndFade(long duration);
     void turnLedsOff();
-    void push();
-    void release();
-    void update();
+    void update(unsigned long currentTime);
 };
 
 Pad::Pad(int id, int buttonPin, Adafruit_NeoPixel *strip, int ledRangeStart, int ledRangeEnd, int *hsb) {
@@ -230,21 +234,28 @@ Pad::Pad(int id, int buttonPin, Adafruit_NeoPixel *strip, int ledRangeStart, int
   this->ledRangeStart = ledRangeStart;
   this->ledRangeEnd = ledRangeEnd;
   this->hsb = hsb;
+  this->previousFadeTime = millis();
   Serial.println("Pad created");
 }
 
-void Pad::update() {
+void Pad::update(unsigned long currentTime) {
   this->button->update();
+  
+  if (currentTime - this->previousFadeTime >= FADE_INTERVAL) {
+    this->previousFadeTime = currentTime;
+    this->fadeLeds();
+  }
 }
 
 void Pad::turnLedsOn() {
   Serial.println("Leds on " + String(this->rgb[RED]));
-  this->turnLedsOn(255);
+  this->turnLedsOn(FULL);
 }
 
 void Pad::turnLedsOn(int brightness) {
   this->hsb[BRIGHTNESS] = brightness;
 
+  // convert hsb to rgb and put into rgb array
   hsb2rgb(this->hsb[HUE], this->hsb[SATURATION], this->hsb[BRIGHTNESS], this->rgb);
 
   for (int i = this->ledRangeStart; i < this->ledRangeEnd; i++) {
@@ -254,6 +265,23 @@ void Pad::turnLedsOn(int brightness) {
   
 }
 
+void Pad::turnOnAndFade(long duration) {
+  this->hsb[BRIGHTNESS]= FULL;
+  this->fadeAmount = calcFadeAmount(duration, FADE_INTERVAL);  
+}
+
+void Pad::fadeLeds() {
+  float newBrightness = this->hsb[BRIGHTNESS] - this->fadeAmount;
+  if (newBrightness < 0) {
+    newBrightness = 0;
+  }
+
+  this->turnLedsOn(newBrightness);
+}
+
+void Pad::turnLedsOff() {
+  this->hsb[BRIGHTNESS] = 0;
+}
 
 // ************************* Main Class ****************************
 /*
@@ -332,8 +360,8 @@ void loop() {
 
   checkFadeTimer();
 
-  //  pads[0]->update();
-  pads[0]->turnLedsOn();
+  pads[0]->update(currentTime);
+//  pads[0]->turnLedsOn();
 
   strip.show();
 }
@@ -353,6 +381,8 @@ void actOnMessage(String message) {
     float sampleDuration = getSampleDuration(message);
     if (leds[ledNumber]) {
       leds[ledNumber]->turnOn();
+
+      pads[ledNumber]->turnOnAndFade(sampleDuration);
 
       // Turn on led strip
 //      hsb[BRIGHTNESS] = 255;
