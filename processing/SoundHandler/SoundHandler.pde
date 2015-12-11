@@ -119,6 +119,7 @@ void handleInput(String value) {
   void communicate(Sound sound) {
     String message = "B" + sound.id + sound.duration + terminator;
     // Tell the arduino the duration of the sample
+    println("To listeners: " + message);
     if (!sim) {
       arduinoPort.write(message);
     } else {

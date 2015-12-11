@@ -11,7 +11,7 @@ class Sound extends Observable {
   
   // For shortening the sample interval slightly, 
   // so looping sounds smoother
-  final static int modifier = 50; 
+final static int modifier = 50; 
   
   Sound(final SoundFile file, final int id) {
     this.file = file;
@@ -19,6 +19,7 @@ class Sound extends Observable {
     isPlaying = false;
     loop = false;
     this.id = id;
+    println("Init sound " + id);
   }
   
   void play() {
@@ -44,7 +45,10 @@ class Sound extends Observable {
     file.play();
     startTime = millis();
     isPlaying = true;
-    //this.notifyObservers();
+    println("Next step is notification");
+    
+    this.setChanged();
+    this.notifyObservers("bla");
   }
   
   float getPlayRate() {
@@ -71,5 +75,5 @@ class Sound extends Observable {
       }
     }
   }
-  
+ 
 }

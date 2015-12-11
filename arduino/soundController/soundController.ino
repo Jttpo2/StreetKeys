@@ -210,7 +210,7 @@ class Pad {
     int buttonPin;
     int ledRangeStart;
     int ledRangeEnd;
-    int *hsb; // color
+    int hsb[3] = {0,0,0}; // color
     uint8_t rgb[3] = {0,0,0};
     float fadeAmount;
     unsigned long previousFadeTime;
@@ -218,7 +218,7 @@ class Pad {
 
   public:
     Adafruit_NeoPixel *strip;
-    Pad(int id, int buttonPin, Adafruit_NeoPixel *strip, int ledRangeStart, int ledRangeEnd, int *hsb);
+    Pad(int id, int buttonPin, Adafruit_NeoPixel *strip, int ledRangeStart, int ledRangeEnd, int hue, int saturation);
     void turnLedsOn();
     void turnLedsOn(int brightness);
     void turnOnAndFade(long duration);
@@ -226,28 +226,39 @@ class Pad {
     void update(unsigned long currentTime);
 };
 
-Pad::Pad(int id, int buttonPin, Adafruit_NeoPixel *strip, int ledRangeStart, int ledRangeEnd, int *hsb) {
+Pad::Pad(int id, int buttonPin, Adafruit_NeoPixel *strip, int ledRangeStart, int ledRangeEnd, int hue, int saturation) {
   this->strip = strip;
   this->button = new Button(buttonPin, id);
   this->buttonPin = buttonPin;
   this->ledRangeStart = ledRangeStart;
   this->ledRangeEnd = ledRangeEnd;
-  this->hsb = hsb;
+  this->hsb[HUE] = hue;
+  this->hsb[SATURATION] = saturation;
+
+//  this->hsb = hsb;
+//Serial.println("H: " + String(hsb[HUE]) + "S: " + String(hsb[SATURATION]) + "B: " + String(hsb[BRIGHTNESS]));
+//  this->hsb[HUE] = hsb[HUE];
+//  this->hsb[SATURATION] = hsb[SATURATION];
+//  this->hsb[BRIGHTNESS] = 0;
+//  this->hsb[BRIGHTNESS] = hsb[BRIGHTNESS];
+  
   this->previousFadeTime = millis();
   Serial.println("Pad created");
 }
 
 void Pad::update(unsigned long currentTime) {
   this->button->update();
+//  Serial.println("update");
   
   if (currentTime - this->previousFadeTime >= FADE_INTERVAL) {
+//    Serial.println("fade interval reached");
     this->previousFadeTime = currentTime;
     this->fadeLeds();
   }
 }
 
 void Pad::turnLedsOn() {
-  Serial.println("Leds on " + String(this->rgb[RED]));
+//  Serial.println("Leds on " + String(this->rgb[RED]));
   this->turnLedsOn(FULL);
 }
 
@@ -260,22 +271,34 @@ void Pad::turnLedsOn(int brightness) {
   for (int i = this->ledRangeStart; i < this->ledRangeEnd; i++) {
     this->strip->setPixelColor(i, this->rgb[RED], this->rgb[GREEN], this->rgb[BLUE]);
   }
+//  Serial.print
 //  Serial.println("Turned on pad, red: " + String(this->rgb[RED]));
   
 }
 
 void Pad::turnOnAndFade(long duration) {
+//  this->turnLedsOn(FULL);
+  
+  
   this->hsb[BRIGHTNESS]= FULL;
   this->fadeAmount = calcFadeAmount(duration, FADE_INTERVAL);  
+  Serial.println("turn on and fade " + String(this->hsb[BRIGHTNESS]) +  " " + String(this->fadeAmount));
 }
 
 void Pad::fadeLeds() {
+//  Serial.println("Fade leds method");
+  if (this->hsb[BRIGHTNESS]) {
+//      Serial.println("Brightbefore: " + this->hsb[BRIGHTNESS]);    
+  } else {
+//    Serial.println("Brightness == NULL" );    
+    }
+
   if(this->hsb[BRIGHTNESS] > 0) {
     float newBrightness = this->hsb[BRIGHTNESS] - this->fadeAmount;
     if (newBrightness < 0) {
       newBrightness = 0;
     }
-
+//   Serial.println("Brightafter: " + this->hsb[BRIGHTNESS]);
     this->turnLedsOn(newBrightness);
   }
 }
@@ -332,7 +355,7 @@ const int overallBrightness = FULL;
 void setup() {
   // Init serial communication
   Serial.begin(9600);
-  Serial.println("Initiated serial com");
+//  Serial.println("Initiated serial com");
 
   strip.begin();
 
@@ -340,17 +363,17 @@ void setup() {
   //  leds[0] = new Led(LED_PIN);
   //  buttons[0] = new Button(BUTTON_PIN, 0);
 
-  int tempButtonId = 0;
-  int pad0Color[] = {100, 255, 255};
-
-  int buttonPins[] = {9};
+  int padHues[]         = {400, 348, 395, 483, 699, 3, 38, 88, 533};
+  int padSaturations[]  = {255, 255, 255, 255, 255, 255, 255, 255, 255};
+  int buttonPins[]      = {9, 1, 3, 4, 5, 7, 8, 10, 11};
+  
   // Pad colors in Hue, Sat, Bright
-  int padColorsHSB[][3] = {{100, 255, 255}};
   const int LEDS_PER_PAD = 6;
 
   // new Pad(id, pin, strip-adress, led range start, led range end, colorHSB[3])
   for (int i=0, ledStartIndex=0, ledEndIndex=LEDS_PER_PAD; i<PAD_AMOUNT; i++, ledStartIndex+=LEDS_PER_PAD, ledEndIndex+=LEDS_PER_PAD) {
-    pads[i] = new Pad(i, buttonPins[i], &strip, ledStartIndex, ledEndIndex, padColorsHSB[i]);
+//    pads[i] = new Pad(i, buttonPins[i], &strip, ledStartIndex, ledEndIndex, padColorsHSB[i]);
+    pads[i] = new Pad(i, buttonPins[i], &strip, ledStartIndex, ledEndIndex, padHues[i], padSaturations[i]);
   }
 
   strip.setBrightness(overallBrightness); // set overall brightness
@@ -394,16 +417,14 @@ String readSerial() {
 
 void actOnMessage(String message) {
   if (!message.equals("")) {
+    Serial.println("From Processing: " + message);
     int ledNumber = getLedNumber(message);
     float sampleDuration = getSampleDuration(message);
+    
+    pads[ledNumber]->turnOnAndFade(sampleDuration);
+    
     if (leds[ledNumber]) {
       leds[ledNumber]->turnOn();
-
-      pads[ledNumber]->turnOnAndFade(sampleDuration);
-
-      // Turn on led strip
-//      hsb[BRIGHTNESS] = 255;
-
       fadeAmount[ledNumber] = calcFadeAmount(sampleDuration, FADE_INTERVAL);
     }
   }
