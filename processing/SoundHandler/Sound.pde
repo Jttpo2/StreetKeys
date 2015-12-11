@@ -45,7 +45,7 @@ final static int modifier = 50;
     file.play();
     startTime = millis();
     isPlaying = true;
-    println("Next step is notification");
+    //println("Next step is notification");
     
     this.setChanged();
     this.notifyObservers("bla");

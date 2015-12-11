@@ -214,6 +214,8 @@ class Pad {
     uint8_t rgb[3] = {0,0,0};
     float fadeAmount;
     unsigned long previousFadeTime;
+    long startTime;
+    float currentSampleDuration;
     void fadeLeds();
 
   public:
@@ -278,22 +280,20 @@ void Pad::turnLedsOn(int brightness) {
 
 void Pad::turnOnAndFade(long duration) {
 //  this->turnLedsOn(FULL);
-  
+  this->startTime = millis();
+  this->currentSampleDuration = duration;
   
   this->hsb[BRIGHTNESS]= FULL;
-  this->fadeAmount = calcFadeAmount(duration, FADE_INTERVAL);  
+//  this->fadeAmount = calcFadeAmount(duration, FADE_INTERVAL);  
   Serial.println("turn on and fade " + String(this->hsb[BRIGHTNESS]) +  " " + String(this->fadeAmount));
 }
 
 void Pad::fadeLeds() {
-//  Serial.println("Fade leds method");
-  if (this->hsb[BRIGHTNESS]) {
-//      Serial.println("Brightbefore: " + this->hsb[BRIGHTNESS]);    
-  } else {
-//    Serial.println("Brightness == NULL" );    
-    }
-
   if(this->hsb[BRIGHTNESS] > 0) {
+    
+    float remainingTime = calculateRemainingTime(this->startTime, this->currentSampleDuration);
+    this->fadeAmount = calcFadeAmount(remainingTime, FADE_INTERVAL);
+    
     float newBrightness = this->hsb[BRIGHTNESS] - this->fadeAmount;
     if (newBrightness < 0) {
       newBrightness = 0;
@@ -301,6 +301,10 @@ void Pad::fadeLeds() {
 //   Serial.println("Brightafter: " + this->hsb[BRIGHTNESS]);
     this->turnLedsOn(newBrightness);
   }
+}
+
+float calculateRemainingTime(long startTime, float totalDuration) {
+  return (startTime + totalDuration) - millis();
 }
 
 void Pad::turnLedsOff() {
@@ -315,7 +319,7 @@ void Pad::turnLedsOff() {
 */
 
 #define LED_STRIP_PIN 6 // LED strip pin
-#define PAD_AMOUNT 9
+#define PAD_AMOUNT 1
 #define LED_STRIP_AMOUNT 60*1
 const int overallBrightness = FULL;
 
@@ -334,7 +338,7 @@ Button *buttons[PAD_AMOUNT];
 Led *leds[LED_AMOUNT];
 float fadeAmount[LED_AMOUNT]; // Last calculated fading amount for all LEDs
 unsigned long previousFadeTime;
-float multiplier = 1.003; // To shorten or lengthen the led fading times slightly
+float multiplier = 1.1; // To shorten or lengthen the led fading times slightly
 
 // Strips 
 // Parameter 1 = number of pixels in strip
@@ -356,10 +360,10 @@ void setup() {
 
   strip.begin();
 
-  int padHues[]         = {400, 348, 395, 483, 699, 3, 38, 88, 533};
+  int padHues[]         = {400, 3, 395, 483, 699, 200, 38, 88, 533};
   int padSaturations[]  = {255, 255, 255, 255, 255, 255, 255, 255, 255};
-  int buttonPins[]      = {9, 1, 3, 4, 5, 7, 8, 10, 11};
-  
+  int buttonPins[]      = {9, 12, 11, 5, 2, 3, 8, 10, 1};
+ 
   // Pad colors in Hue, Sat, Bright
   const int LEDS_PER_PAD = LED_STRIP_AMOUNT/9;
 
@@ -450,7 +454,7 @@ float getSampleDuration(String message) {
 float calcFadeAmount(float sampleLength, int fadeInterval) {
   float modifiedSampleLength = sampleLength * multiplier;
   float fadeAmount = 255.0 / (modifiedSampleLength / fadeInterval); // map fading interval times to analog output amount
-  Serial.println("FadeAmount: " + String(fadeAmount) + " Interval: " + fadeInterval + " Modified sample length: " +  modifiedSampleLength);
+//  Serial.println("FadeAmount: " + String(fadeAmount) + " Interval: " + fadeInterval + " Modified sample length: " +  modifiedSampleLength);
   return fadeAmount;
 }
 
