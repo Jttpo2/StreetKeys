@@ -166,8 +166,10 @@ String Led::toString() {
 
 class Button {
   private:
-    int buttonState = LOW;             // the current reading from the input pin
-    int lastButtonState = HIGH;   // the previous reading from the input pin
+//    int buttonState = LOW;             // the current reading from the input pin
+    int buttonState = HIGH;             // the current reading from the input pin
+//    int lastButtonState = HIGH;   // the previous reading from the input pin
+    int lastButtonState = LOW;   // the previous reading from the input pin
     // Debouncing
     long lastDebounceTime = 0;  // the last time the output pin was toggled
     long debounceDelay = 50;    // the debounce time; increase if the output flickers
@@ -209,7 +211,8 @@ void Button::update() {
 
       // only toggle the LED if the new button state is HIGH
       // Send correct button state to processing
-      if (this->buttonState == HIGH) {
+//      if (this->buttonState == HIGH) {
+        if (this->buttonState == LOW) {
         // ****** Do something when button is pressed *****
         String downMessage = "B" + String(id) + "D";
         // Send to processing
