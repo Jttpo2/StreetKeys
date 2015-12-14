@@ -1,5 +1,33 @@
 #include <Adafruit_NeoPixel.h>
 
+
+// ****************** Setup ***************************
+#define PAD_AMOUNT 1
+#define LED_STRIP_AMOUNT 20 //60*3
+
+//  const int LEDS_PER_PAD = LED_STRIP_AMOUNT/9;
+const int LEDS_PER_PAD = LED_STRIP_AMOUNT;
+
+int padHues[]         = {400, 3, 395, 483, 699, 200, 38, 88, 533};
+int padSaturations[]  = {255, 255, 255, 255, 255, 255, 255, 255, 255};
+int buttonPins[]      = {5, 4, 3, 10, 12, 11, 13, 10, 1};
+float multiplier = 1; // To shorten or lengthen the led fading times slightly
+                      // multiplier for 180 leds: 0.25
+                       // 60 leds: 0.9
+const int FADE_INTERVAL = 20;
+
+
+// ****************************************************
+
+
+
+
+
+
+
+
+
+
 #define RED 0
 #define GREEN 1
 #define BLUE 2
@@ -7,7 +35,6 @@
 #define SATURATION 1
 #define BRIGHTNESS 2
 #define FULL 255
-const int FADE_INTERVAL = 20;
 
 /******************************************************************************
    accepts hue, saturation and brightness values and outputs three 8-bit color
@@ -325,10 +352,8 @@ void Pad::turnLedsOff() {
 */
 
 #define LED_STRIP_PIN 6 // LED strip pin
-#define PAD_AMOUNT 5
-#define LED_STRIP_AMOUNT 60*3
-const int overallBrightness = FULL;
 
+const int overallBrightness = FULL;
 
 #define BUTTON_PIN 9
 #define LED_PIN 13      // the number of the test LED pin
@@ -344,9 +369,7 @@ Button *buttons[PAD_AMOUNT];
 Led *leds[LED_AMOUNT];
 float fadeAmount[LED_AMOUNT]; // Last calculated fading amount for all LEDs
 unsigned long previousFadeTime;
-float multiplier = 0.25; // To shorten or lengthen the led fading times slightly
-// multiplier for 180 leds: 0.25
-// 60 leds: 0.9
+
 
 // Strips 
 // Parameter 1 = number of pixels in strip
@@ -368,13 +391,8 @@ void setup() {
 
   strip.begin();
 
-  int padHues[]         = {400, 3, 395, 483, 699, 200, 38, 88, 533};
-  int padSaturations[]  = {255, 255, 255, 255, 255, 255, 255, 255, 255};
-  int buttonPins[]      = {5, 4, 3, 10, 12, 11, 13, 10, 1};
-
  // fucked: 8, 9, 2, 7, 
   // Pad colors in Hue, Sat, Bright
-  const int LEDS_PER_PAD = LED_STRIP_AMOUNT/9;
 
   // new Pad(id, pin, strip-adress, led range start, led range end, colorHSB[3])
   for (int i=0, ledStartIndex=0, ledEndIndex=LEDS_PER_PAD; i<PAD_AMOUNT; i++, ledStartIndex+=LEDS_PER_PAD, ledEndIndex+=LEDS_PER_PAD) {
