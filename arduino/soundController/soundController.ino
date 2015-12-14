@@ -2,15 +2,16 @@
 
 
 // ****************** Setup ***************************
-#define PAD_AMOUNT 1
-#define LED_STRIP_AMOUNT 20 //60*3
+#define PAD_AMOUNT 4
+#define LED_STRIP_AMOUNT 20*PAD_AMOUNT //60*3
+#define LED_STRIP_PIN 11 // LED strip pin
 
 //  const int LEDS_PER_PAD = LED_STRIP_AMOUNT/9;
-const int LEDS_PER_PAD = LED_STRIP_AMOUNT;
+const int LEDS_PER_PAD = LED_STRIP_AMOUNT/PAD_AMOUNT;
 
-int padHues[]         = {400, 3, 395, 483, 699, 200, 38, 88, 533};
+int padHues[]         = {400, 50, 100, 500, 699, 200, 10, 88, 580};
 int padSaturations[]  = {255, 255, 255, 255, 255, 255, 255, 255, 255};
-int buttonPins[]      = {5, 4, 3, 10, 12, 11, 13, 10, 1};
+int buttonPins[]      = {2, 3, 4, 5, 12, 11, 13, 10, 1};
 float multiplier = 1; // To shorten or lengthen the led fading times slightly
                       // multiplier for 180 leds: 0.25
                        // 60 leds: 0.9
@@ -354,7 +355,6 @@ void Pad::turnLedsOff() {
    B1U - Button number 1 up
 */
 
-#define LED_STRIP_PIN 6 // LED strip pin
 
 const int overallBrightness = FULL;
 
